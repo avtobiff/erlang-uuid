@@ -40,6 +40,9 @@
 %% @doc  Create a UUID v4 (random) as a binary
 %% @spec () -> binary()
 uuid4() ->
+    {A1, A2, A3} = now(),
+    random:seed(A1, A2, A3),
+
     U0 = random:uniform(round(math:pow(2,48) - 1)),
     U1 = random:uniform(round(math:pow(2,12) - 1)),
     U2 = random:uniform(round(math:pow(2,60) - 1)),
