@@ -26,9 +26,9 @@ USE
 ---
 Example of usage
 
-    1> uuid:to_string(uuid:v4()).
+    1> uuid:to_string(uuid:uuid4()).
     "79f492f8-1337-4200-abcd-92bada1cacao"
 
 
 
-  Per Andersson <avtobiff@gmail.com>  Tue, 22 Jun 2010 16:58:15 +0200
+  Per Andersson <avtobiff@gmail.com>  Wed, 23 Jun 2010 10:18:19 +0200

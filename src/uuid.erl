@@ -24,7 +24,7 @@
 %%
 %% Example usage
 %% <pre>
-%%     1> uuid:to_string(uuid:v4()).
+%%     1> uuid:to_string(uuid:uuid4()).
 %%     "79f492f8-1337-4200-abcd-92bada1cacao"
 %% </pre>
 %% @end
@@ -33,25 +33,25 @@
 -module(uuid).
 -author('Per Andersson').
 
--export([v4/0, to_string/1]).
+-export([uuid4/0, to_string/1]).
 
 
 
 %% @doc  Create a UUID v4 (random) as a binary
 %% @spec () -> binary()
-v4() ->
+uuid4() ->
     U0 = random:uniform(round(math:pow(2,48) - 1)),
     U1 = random:uniform(round(math:pow(2,12) - 1)),
     U2 = random:uniform(round(math:pow(2,60) - 1)),
 
-    v4(U0, U1, U2).
+    uuid4(U0, U1, U2).
 
 
 %% @private
 %% @doc  Create a 128 bit binary (UUID v4) from input
 %% @spec (U0, U1, U2) -> binary()
 %% where U0 = U1 = U2 = integer()
-v4(U0, U1, U2) -> <<U0:48, 4:4, U1:12, 10:4, U2:60>>.
+uuid4(U0, U1, U2) -> <<U0:48, 4:4, U1:12, 10:4, U2:60>>.
 
 
 %% @doc  Format uuid string from binary
