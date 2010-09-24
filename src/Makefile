@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 
-ERL  ?= /usr/bin/erl
-ERLC ?= /usr/bin/erlc
+ERL  ?= erl
+ERLC ?= erlc
 EFLAGS ?= -W +debug_info +compressed +strip
 SRC = uuid.erl
 BINDIR ?= ../ebin
