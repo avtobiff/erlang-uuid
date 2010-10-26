@@ -31,3 +31,7 @@
 
 uuid_v4_binary_test() ->
    ?assertMatch(<<_U0:48, 4:4, _U1:12, 10:4, _U2:60>>, uuid:uuid4()).
+
+representation_test() ->
+    Uuid = uuid:uuid4(),
+    ?assertMatch(Uuid, uuid:to_binary(uuid:to_string(Uuid))).

@@ -20,6 +20,10 @@ clean:
 dialyzer:
 	dialyzer -c $(BEAMFILES)
 
+test:
+	erlc -W +debug_info +compressed +strip -o test/ test/*.erl
+	erl -noshell -pa ebin -pa test -eval "uuid_v4_tests:test()" -eval "init:stop()"
+
 install: build
 	# create dist directory and install files
 	mkdir -p $(DESTDIR)$(ERL_ROOT)$(LIBDIR)/$(DISTDIR)/ebin
@@ -29,4 +33,4 @@ uninstall:
 	-rm -rf $(DESTDIR)$(ERL_ROOT)$(LIBDIR)/uuid-[0-9][0-9.]*
 
 
-.PHONY: all build clean dialyzer install uninstall
+.PHONY: all build clean dialyzer test install uninstall

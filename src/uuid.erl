@@ -33,7 +33,7 @@
 -module(uuid).
 -author('Per Andersson').
 
--export([uuid4/0, to_string/1]).
+-export([uuid4/0, to_string/1, to_binary/1]).
 
 
 
@@ -43,9 +43,9 @@ uuid4() ->
     {A1, A2, A3} = now(),
     random:seed(A1, A2, A3),
 
-    U0 = random:uniform(round(math:pow(2,48) - 1)),
-    U1 = random:uniform(round(math:pow(2,12) - 1)),
-    U2 = random:uniform(round(math:pow(2,60) - 1)),
+    U0 = random:uniform((2 bsl 48) - 1),
+    U1 = random:uniform((2 bsl 12) - 1),
+    U2 = random:uniform((2 bsl 60) - 1),
 
     uuid4(U0, U1, U2).
 
@@ -63,3 +63,14 @@ to_string(<<U0:32, U1:16, U2:16, U3:16, U4:48>>) ->
     lists:flatten(io_lib:format(
         "~8.16.0b-~4.16.0b-~4.16.0b-~4.16.0b-~12.16.0b",
         [U0, U1, U2, U3, U4])).
+
+%% @doc  Format uuid binary from string
+%% @spec (UuidStr::string()) -> binary()
+to_binary(UuidStr) ->
+    Parts = string:tokens(UuidStr, "$-"),
+    [I0, I1, I2, I3, I4] = [hex_to_int(Part) || Part <- Parts],
+    <<I0:32, I1:16, I2:16, I3:16, I4:48>>.
+
+hex_to_int(Hex) ->
+    {ok, [D], []} = io_lib:fread("~16u", Hex),
+    D.
