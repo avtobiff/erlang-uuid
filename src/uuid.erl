@@ -62,14 +62,18 @@ uuid4(U0, U1, U2) -> <<U0:48, 4:4, U1:12, 10:4, U2:60>>.
 to_string(<<U0:32, U1:16, U2:16, U3:16, U4:48>>) ->
     lists:flatten(io_lib:format(
         "~8.16.0b-~4.16.0b-~4.16.0b-~4.16.0b-~12.16.0b",
-        [U0, U1, U2, U3, U4])).
+        [U0, U1, U2, U3, U4]));
+to_string(_) ->
+    error(badarg).
 
 %% @doc  Format uuid binary from string
 %% @spec (UuidStr::string()) -> binary()
-to_binary(UuidStr) ->
+to_binary(UuidStr) when is_list(UuidStr) ->
     Parts = string:tokens(UuidStr, "$-"),
     [I0, I1, I2, I3, I4] = [hex_to_int(Part) || Part <- Parts],
-    <<I0:32, I1:16, I2:16, I3:16, I4:48>>.
+    <<I0:32, I1:16, I2:16, I3:16, I4:48>>;
+to_binary(_) ->
+    error(badarg).
 
 hex_to_int(Hex) ->
     {ok, [D], []} = io_lib:fread("~16u", Hex),

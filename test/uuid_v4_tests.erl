@@ -35,3 +35,15 @@ uuid_v4_binary_test() ->
 representation_test() ->
     Uuid = uuid:uuid4(),
     ?assertMatch(Uuid, uuid:to_binary(uuid:to_string(Uuid))).
+
+exceptions_test() ->
+    ?assertMatch(ok, try_badarg(to_binary, 0)),
+    ?assertMatch(ok, try_badarg(to_string, 0)).
+
+
+try_badarg(F, A) ->
+    try
+        uuid:F(A)
+    catch error:badarg ->
+        ok
+    end.
