@@ -1,0 +1,7 @@
+{application, uuid,
+ [{description, "UUID generator"},
+  {vsn, "0.1.0"},
+  {modules, [uuid]},
+  {registered, []},
+  {applications, [stdlib]},
+  {env, []}]}.

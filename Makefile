@@ -1,6 +1,8 @@
 #!/usr/bin/make -f
 
-VERSION   := 0.1.0
+APPFILE   := uuid.app
+VERSION   := $(shell sed -n '/vsn/ {s/.*,\s*"\([0-9][0-9.]*\)".*/\1/; p}' \
+                         src/$(APPFILE).src)
 
 PREFIX    ?= /usr
 ERL_ROOT  := $(PREFIX)/lib/erlang
@@ -11,8 +13,11 @@ BEAMFILES := $(wildcard ebin/*)
 
 all: build
 
-build:
+build: ebin/$(APPFILE)
 	erl -make
+
+ebin/$(APPFILE): src/$(APPFILE).src
+	cp $< $@
 
 clean:
 	-rm -rf $(BEAMFILES)
@@ -27,10 +32,9 @@ test:
 install: build
 	# create dist directory and install files
 	mkdir -p $(DESTDIR)$(ERL_ROOT)$(LIBDIR)/$(DISTDIR)/ebin
-	install -m0644 $(BEAMFILES) $(DESTDIR)$(ERL_ROOT)$(LIBDIR)/$(DISTDIR)/ebin
+	install -m0644 ebin/* $(DESTDIR)$(ERL_ROOT)$(LIBDIR)/$(DISTDIR)/ebin
 
 uninstall:
 	-rm -rf $(DESTDIR)$(ERL_ROOT)$(LIBDIR)/uuid-[0-9][0-9.]*
-
 
 .PHONY: all build clean dialyzer test install uninstall
