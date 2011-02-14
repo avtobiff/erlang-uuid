@@ -26,7 +26,7 @@ Install to default $ERL_ROOT (/usr/lib/erlang) by invoking
 
 Install to different $ERL_ROOT ($PREFIX/lib/erlang) by setting PREFIX
 
-    sudo make PREFIX=/opt install
+    sudo make PREFIX=/opt/erlang install
 
 
 
