@@ -27,7 +27,7 @@ dialyzer:
 
 test:
 	erlc -W +debug_info +compressed +strip -o test/ test/*.erl
-	erl -noshell -pa ebin -pa test -eval "uuid_v4_tests:test()" -eval "init:stop()"
+	erl -noshell -pa ebin -pa test -eval "uuid_tests:test()" -eval "init:stop()"
 
 install: build
 	# create dist directory and install files
