@@ -35,7 +35,7 @@
 -module(uuid).
 -author('Per Andersson').
 
--export([uuid4/0, uuid5/2, to_string/1, to_binary/1]).
+-export([uuid4/0, uuid5/2, to_string/1, to_string/2, to_binary/1]).
 
 
 
@@ -95,12 +95,19 @@ uuid4(U0, U1, U2) -> <<U0:48, 4:4, U1:12, 10:4, U2:60>>.
 
 
 %% @doc  Format uuid string from binary
--spec to_string(Uuid::binary()) -> string().
-to_string(<<U0:32, U1:16, U2:16, U3:16, U4:48>>) ->
+to_string(Uuid) when is_binary(Uuid) ->
+    to_string(pretty, Uuid);
+to_string(_) ->
+    erlang:error(badarg).
+
+-spec to_string(simple | pretty, Uuid::binary()) -> string().
+to_string(pretty, <<U0:32, U1:16, U2:16, U3:16, U4:48>>) ->
     lists:flatten(io_lib:format(
         "~8.16.0b-~4.16.0b-~4.16.0b-~4.16.0b-~12.16.0b",
         [U0, U1, U2, U3, U4]));
-to_string(_) ->
+to_string(simple, <<S:128>>) ->
+    lists:flatten(io_lib:format("~32.16.0b", [S]));
+to_string(_, _) ->
     erlang:error(badarg).
 
 %% @doc  Format uuid binary from string
