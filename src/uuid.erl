@@ -97,7 +97,9 @@ to_string(pretty, <<U0:32, U1:16, U2:16, U3:16, U4:48>>) ->
         "~8.16.0b-~4.16.0b-~4.16.0b-~4.16.0b-~12.16.0b",
         [U0, U1, U2, U3, U4]));
 to_string(simple, <<S:128>>) ->
-    lists:flatten(io_lib:format("~32.16.0b", [S])).
+    lists:flatten(io_lib:format("~32.16.0b", [S]));
+to_string(_, _) ->
+    erlang:error(badarg).
 
 %% @doc  Format uuid binary from string
 -spec to_binary(UuidStr::string()) -> binary().
