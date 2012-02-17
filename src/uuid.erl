@@ -26,6 +26,8 @@
 %% <pre>
 %%     1> uuid:to_string(uuid:uuid4()).
 %%     "79f492f8-1337-4200-abcd-92bada1cacao"
+%%     2> uuid:to_string(uuid:uuid5(dns, "fqdn.example.com")).
+%%     "8fd7fa87-4c20-5809-a1b0-e07f5c224f02"
 %% </pre>
 %% @end
 %% -----------------------------------------------------------------------------
@@ -33,12 +35,12 @@
 -module(uuid).
 -author('Per Andersson').
 
--export([uuid4/0, to_string/1, to_binary/1]).
+-export([uuid4/0, uuid5/2, to_string/1, to_binary/1]).
 
 
 
 %% @doc  Create a UUID v4 (random) as a binary
-%% @spec () -> binary()
+-spec uuid4() -> binary().
 uuid4() ->
     {A1, A2, A3} = now(),
     random:seed(A1, A2, A3),
@@ -50,15 +52,50 @@ uuid4() ->
     uuid4(U0, U1, U2).
 
 
+%% @doc  Create a UUID v5 (name based) as a binary.
+%%       Magic numbers are from Appendix C of the RFC 4122.
+-spec uuid5(NamespaceOrUuid::atom() | string() | binary(),
+            Name::string()) -> binary().
+uuid5(dns, Name) ->
+    uuid5(list_to_binary([<<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name]));
+uuid5(url, Name) ->
+    uuid5(list_to_binary([<<16#6ba7b8119dad11d180b400c04fd430c8:128>>, Name]));
+uuid5(oid, Name) ->
+    uuid5(list_to_binary([<<16#6ba7b8129dad11d180b400c04fd430c8:128>>, Name]));
+uuid5(x500, Name) ->
+    uuid5(list_to_binary([<<16#6ba7b8149dad11d180b400c04fd430c8:128>>, Name]));
+uuid5(nil, Name) ->
+    uuid5(list_to_binary([<<0:128>>, Name]));
+uuid5(UuidStr, Name) when is_list(UuidStr) ->
+    uuid5(list_to_binary([to_binary(UuidStr), Name]));
+uuid5(UuidBin, Name) when is_binary(UuidBin) ->
+    uuid5(list_to_binary([UuidBin, Name]));
+uuid5(_, _) ->
+    erlang:error(badarg).
+
 %% @private
+%% @doc  Create a UUID v5 (name based) from binary
+-spec uuid5(Data::binary()) -> binary().
+uuid5(Data) ->
+    <<Sha1:128, _:32>> = crypto:sha(Data),
+
+    <<TimeLow:32, TimeMid:16, _AndVersion:4, TimeHi:12,
+      _AndReserved:2, ClockSeqHi:6, ClockSeqLow:8, Node:48>> = <<Sha1:128>>,
+
+    Version = 5,
+    Variant = 2#10,
+
+    <<TimeLow:32, TimeMid:16, Version:4, TimeHi:12,
+      Variant:2, ClockSeqHi:6, ClockSeqLow:8, Node:48>>.
+
+
 %% @doc  Create a 128 bit binary (UUID v4) from input
-%% @spec (U0, U1, U2) -> binary()
-%% where U0 = U1 = U2 = integer()
+-spec uuid4(U0::integer(), U1::integer(), U2::integer()) -> binary().
 uuid4(U0, U1, U2) -> <<U0:48, 4:4, U1:12, 10:4, U2:60>>.
 
 
 %% @doc  Format uuid string from binary
-%% @spec (Uuid::binary()) -> string()
+-spec to_string(Uuid::binary()) -> string().
 to_string(<<U0:32, U1:16, U2:16, U3:16, U4:48>>) ->
     lists:flatten(io_lib:format(
         "~8.16.0b-~4.16.0b-~4.16.0b-~4.16.0b-~12.16.0b",
@@ -67,7 +104,7 @@ to_string(_) ->
     erlang:error(badarg).
 
 %% @doc  Format uuid binary from string
-%% @spec (UuidStr::string()) -> binary()
+-spec to_binary(UuidStr::string()) -> binary().
 to_binary(UuidStr) when is_list(UuidStr) ->
     Parts = string:tokens(UuidStr, "$-"),
     [I0, I1, I2, I3, I4] = [hex_to_int(Part) || Part <- Parts],
