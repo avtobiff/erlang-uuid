@@ -19,8 +19,7 @@
 %% @doc
 %% Erlang UUID
 %%
-%% Currently implements UUID v4, UUID generated with (pseudo) random number
-%% generator.
+%% Currently implements UUID v4 and v5 as of RFC 4122.
 %%
 %% Example usage
 %% <pre>
@@ -73,6 +72,7 @@ uuid5(UuidBin, Name) when is_binary(UuidBin) ->
 uuid5(_, _) ->
     erlang:error(badarg).
 
+
 %% @private
 %% @doc  Create a UUID v5 (name based) from binary
 -spec uuid5(Data::binary()) -> binary().
@@ -94,7 +94,8 @@ uuid5(Data) ->
 uuid4(U0, U1, U2) -> <<U0:48, 4:4, U1:12, 10:4, U2:60>>.
 
 
-%% @doc  Format uuid string from binary
+%% @doc  Format UUID string from binary
+-spec to_string(Uuid::binary()) -> string().
 to_string(Uuid) when is_binary(Uuid) ->
     to_string(pretty, Uuid);
 to_string(_) ->
@@ -110,6 +111,7 @@ to_string(simple, <<S:128>>) ->
 to_string(_, _) ->
     erlang:error(badarg).
 
+
 %% @doc  Format uuid binary from string
 -spec to_binary(UuidStr::string()) -> binary().
 to_binary(UuidStr) when is_list(UuidStr) ->
@@ -119,6 +121,10 @@ to_binary(UuidStr) when is_list(UuidStr) ->
 to_binary(_) ->
     erlang:error(badarg).
 
+
+%% @private
+%% @doc  Convert from hexadecimal digit represented as string to decimal.
+-spec hex_to_int(Hex::string()) -> integer().
 hex_to_int(Hex) ->
     {ok, [D], []} = io_lib:fread("~16u", Hex),
     D.
