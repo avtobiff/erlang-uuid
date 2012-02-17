@@ -85,13 +85,15 @@ tostring_test() ->
                  uuid:to_string(simple, uuid:uuid5(dns, "fqdn.example.com"))).
 
 exceptions_test() ->
-    ?assertMatch(ok, try_badarg(to_binary, 0)),
-    ?assertMatch(ok, try_badarg(to_string, 0)).
+    ?assertMatch(ok, try_badarg(to_binary, [0])),
+    ?assertMatch(ok, try_badarg(to_string, [0])),
+    ?assertMatch(ok, try_badarg(to_string, [0, 0])),
+    ?assertMatch(ok, try_badarg(uuid5,     [0, 0])).
 
 
 try_badarg(F, A) ->
     try
-        uuid:F(A)
+        apply(uuid, F, A)
     catch error:badarg ->
         ok
     end.
