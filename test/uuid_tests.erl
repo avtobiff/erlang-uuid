@@ -86,8 +86,10 @@ uuid_binary_test() ->
                  uuid:uuid5(uuid:to_string(Uuid), "fqdn.example.com")).
 
 representation_test() ->
+    Uuid1 = uuid:uuid1(),
     Uuid4 = uuid:uuid4(),
     Uuid5 = uuid:uuid5(dns, "fqdn.example.com"),
+    ?assertMatch(Uuid1, uuid:to_binary(uuid:to_string(Uuid1))),
     ?assertMatch(Uuid4, uuid:to_binary(uuid:to_string(Uuid4))),
     ?assertMatch(Uuid5, uuid:to_binary(uuid:to_string(Uuid5))).
 
