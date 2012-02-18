@@ -28,42 +28,45 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-include("../src/uuid.hrl").
+
 
 uuid_binary_test() ->
     Uuid = uuid:uuid4(),
 
-    ?assertMatch(<<_U0:48, 4:4, _U1:12, 2:2, _U2:62>>, uuid:uuid4()),
+    ?assertMatch(<<_U0:48, ?UUIDv4:4, _U1:12, ?VARIANT:2, _U2:62>>,
+                 uuid:uuid4()),
 
-    ?assertMatch(<<_U0:48, 5:4, _U1:12, _:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
                  uuid:uuid5(dns, "fqdn.example.com")),
     ?assertEqual(uuid:uuid5(dns, "fqdn.example.com"),
                  uuid:uuid5(dns, "fqdn.example.com")),
 
-    ?assertMatch(<<_U0:48, 5:4, _U1:12, _:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
                  uuid:uuid5(oid, "2.5.6")),
     ?assertEqual(uuid:uuid5(oid, "2.5.6"), uuid:uuid5(oid, "2.5.6")),
 
-    ?assertMatch(<<_U0:48, 5:4, _U1:12, _:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
                  uuid:uuid5(url, "http://fqdn.example.com/path")),
     ?assertEqual(uuid:uuid5(url, "http://fqdn.example.com/path"),
                  uuid:uuid5(url, "http://fqdn.example.com/path")),
 
-    ?assertMatch(<<_U0:48, 5:4, _U1:12, _:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
                  uuid:uuid5(x500, "cn=John Doe, o=Acme, Inc., c=US")),
     ?assertEqual(uuid:uuid5(x500, "cn=John Doe, o=Acme, Inc., c=US"),
                  uuid:uuid5(x500, "cn=John Doe, o=Acme, Inc., c=US")),
 
-    ?assertMatch(<<_U0:48, 5:4, _U1:12, _:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
                  uuid:uuid5(nil, "my own unique name")),
     ?assertEqual(uuid:uuid5(nil, "my own unique name"),
                  uuid:uuid5(nil, "my own unique name")),
 
-    ?assertMatch(<<_U0:48, 5:4, _U1:12, _:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
                  uuid:uuid5(Uuid, "fqdn.example.com")),
     ?assertEqual(uuid:uuid5(Uuid, "fqdn.example.com"),
                  uuid:uuid5(Uuid, "fqdn.example.com")),
 
-    ?assertMatch(<<_U0:48, 5:4, _U1:12, _:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
                  uuid:uuid5(uuid:to_string(Uuid), "fqdn.example.com")),
     ?assertEqual(uuid:uuid5(uuid:to_string(Uuid), "fqdn.example.com"),
                  uuid:uuid5(uuid:to_string(Uuid), "fqdn.example.com")).
