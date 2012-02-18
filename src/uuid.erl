@@ -59,11 +59,11 @@
 %% =============================================================================
 
 %% @doc Create a UUID v1 (timebased).
--spec uuid1() -> binary().
+-spec uuid1() -> uuid().
 uuid1() ->
     uuid1(null, null).
 
--spec uuid1(NodeArg::binary(), ClockSeqArg::binary()) -> binary().
+-spec uuid1(NodeArg::binary(), ClockSeqArg::binary()) -> uuid().
 uuid1(NodeArg, ClockSeqArg) ->
     %% Determine values for UTC timestamp and clock sequence.
     %% FIXME Use random clock sequence for now ("state is unavailable").
@@ -106,8 +106,8 @@ uuid1(NodeArg, ClockSeqArg) ->
 %% =============================================================================
 %% @doc  Create a UUID v3 (name based, MD5 is hashing function) as a binary.
 %%       Magic numbers are from Appendix C of the RFC 4122.
--spec uuid3(NamespaceOrUuid::atom() | string() | binary(),
-            Name::string()) -> binary().
+-spec uuid3(NamespaceOrUuid::atom() | uuid_string() | uuid(),
+            Name::string()) -> uuid().
 uuid3(dns, Name) ->
     create_namebased_uuid(md5,
         list_to_binary([<<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name]));
@@ -135,7 +135,7 @@ uuid3(_, _) ->
 %% =============================================================================
 
 %% @doc  Create a UUID v4 (random) as a binary
--spec uuid4() -> binary().
+-spec uuid4() -> uuid().
 uuid4() ->
     random:seed(now()),
 
@@ -148,7 +148,7 @@ uuid4() ->
 
 %% @private
 %% @doc  Create a 128 bit binary (UUID v4) from input
--spec uuid4(U0::integer(), U1::integer(), U2::integer()) -> binary().
+-spec uuid4(U0::integer(), U1::integer(), U2::integer()) -> uuid().
 uuid4(U0, U1, U2) ->
     % Set the four most significant bits (bits 12 through 15) of the
     % time_hi_and_version field to 0100, corresponding to version 4.
@@ -169,8 +169,8 @@ uuid4(U0, U1, U2) ->
 
 %% @doc  Create a UUID v5 (name based, SHA1 is hashing function) as a binary.
 %%       Magic numbers are from Appendix C of the RFC 4122.
--spec uuid5(NamespaceOrUuid::atom() | string() | binary(),
-            Name::string()) -> binary().
+-spec uuid5(NamespaceOrUuid::atom() | uuid_string() | uuid(),
+            Name::string()) -> uuid().
 uuid5(dns, Name) ->
     create_namebased_uuid(sha1,
         list_to_binary([<<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name]));
@@ -197,7 +197,7 @@ uuid5(_, _) ->
 %% @doc  Create a UUID v3 or v5 (name based) from binary, using MD5 or SHA1
 %%       respectively.
 -spec create_namebased_uuid(HashFunction::md5 | sha1,
-                            Data::binary()) -> binary().
+                            Data::binary()) -> uuid().
 create_namebased_uuid(md5, Data) ->
     Md5 = crypto:md5(Data),
     compose_namebased_uuid(?UUIDv3, Md5);
@@ -207,7 +207,7 @@ create_namebased_uuid(sha1, Data) ->
 
 %% @private
 %% @doc  Compose a namebased UUID (v3 or v5) with input hashed data.
--spec compose_namebased_uuid(Version::3 | 5, Hash::binary()) -> binary().
+-spec compose_namebased_uuid(Version::3 | 5, Hash::binary()) -> uuid().
 compose_namebased_uuid(Version, Hash) ->
     <<TimeLow:32, TimeMid:16, _AndVersion:4, TimeHi:12,
       _AndReserved:2, ClockSeqHi:6, ClockSeqLow:8, Node:48>> = Hash,
@@ -221,13 +221,13 @@ compose_namebased_uuid(Version, Hash) ->
 %% =============================================================================
 
 %% @doc  Format UUID string from binary
--spec to_string(Uuid::binary()) -> string().
+-spec to_string(Uuid::uuid()) -> uuid_string().
 to_string(Uuid) when is_binary(Uuid) ->
     to_string(pretty, Uuid);
 to_string(_) ->
     erlang:error(badarg).
 
--spec to_string(simple | pretty, Uuid::binary()) -> string().
+-spec to_string(simple | pretty, Uuid::uuid()) -> uuid_string().
 to_string(pretty, <<U0:32, U1:16, U2:16, U3:16, U4:48>>) ->
     lists:flatten(io_lib:format(
         "~8.16.0b-~4.16.0b-~4.16.0b-~4.16.0b-~12.16.0b",
@@ -239,7 +239,7 @@ to_string(_, _) ->
 
 
 %% @doc  Create UUID URN from UUID binary or string.
--spec to_uuid_urn(UuidOrUrn::binary() | string()) -> string().
+-spec to_uuid_urn(UuidOrUrn::uuid() | uuid_string()) -> urn().
 to_uuid_urn([$u, $r, $n, $:, $u, $u, $i, $d, $: |_] = Urn) ->
     Urn;
 to_uuid_urn(Uuid) when is_binary(Uuid) ->
@@ -249,7 +249,7 @@ to_uuid_urn(Uuid) when is_list(Uuid) ->
 
 
 %% @doc  Format uuid binary from string
--spec to_binary(UuidStr::string()) -> binary().
+-spec to_binary(UuidStr::uuid_string()) -> uuid().
 to_binary(UuidStr) when is_list(UuidStr) ->
     Parts = string:tokens(UuidStr, "$-"),
     [I0, I1, I2, I3, I4] = [hex_to_int(Part) || Part <- Parts],

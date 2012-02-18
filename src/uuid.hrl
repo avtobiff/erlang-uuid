@@ -1,3 +1,8 @@
+%% The UUID types
+-type uuid()::binary().
+-type uuid_string()::string().
+-type urn()::string().
+
 %% Variant, corresponds to variant 1 0 of RFC 4122.
 -define(VARIANT, 2).
 
