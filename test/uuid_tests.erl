@@ -34,9 +34,23 @@
 uuid_binary_test() ->
     Uuid = uuid:uuid4(),
 
+    %% UUID v1
+    NodeId = uuid:get_node(),
+    ?assertMatch(<<_U0:48, ?UUIDv1:4, _U1:12, ?VARIANT:2, _U2:14,
+                   NodeId/binary>>,
+                 uuid:uuid1()),
+
+    NilNode = <<0:48>>,
+    ClockSeq = <<ClockSeqHi:6, ClockSeqLow:8>> = <<0:14>>,
+    ?assertMatch(<<_U0:48, ?UUIDv1:4, _U1:12, ?VARIANT:2,
+                   ClockSeqLow:8, ClockSeqHi:6, NilNode/binary>>,
+                 uuid:uuid1(NilNode, ClockSeq)),
+
+    %% UUID v4
     ?assertMatch(<<_U0:48, ?UUIDv4:4, _U1:12, ?VARIANT:2, _U2:62>>,
                  uuid:uuid4()),
 
+    %% UUID v5
     ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
                  uuid:uuid5(dns, "fqdn.example.com")),
     ?assertEqual(uuid:uuid5(dns, "fqdn.example.com"),

@@ -19,7 +19,7 @@
 %% @doc
 %% Erlang UUID
 %%
-%% Currently implements UUID v4 and v5 as of RFC 4122.
+%% Currently implements UUID v1, v4, and v5 as of RFC 4122.
 %%
 %% Example usage
 %% <pre>
@@ -36,13 +36,65 @@
 
 -include("uuid.hrl").
 
--export([to_binary/1,
+-export([get_node/0,
+         to_binary/1,
          to_string/1, to_string/2,
          to_uuid_urn/1,
+         uuid1/0, uuid1/2,
          uuid4/0,
          uuid5/2]).
 
 
+%% =============================================================================
+%% UUID v1
+%% =============================================================================
+
+%% @doc Create a UUID v1 (timebased).
+-spec uuid1() -> binary().
+uuid1() ->
+    uuid1(null, null).
+
+-spec uuid1(NodeArg::binary(), ClockSeqArg::binary()) -> binary().
+uuid1(NodeArg, ClockSeqArg) ->
+    %% Determine values for UTC timestamp and clock sequence.
+    %% FIXME Use random clock sequence for now ("state is unavailable").
+    UtcTimestamp =
+        calendar:datetime_to_gregorian_seconds(calendar:universal_time()),
+
+    %% Multiply timestamp with amount of hundred nanosecond intervals per
+    %% second since clock have lower resolution than this.
+    HundredNanosPerSecond = round(1.0e9), % to integer()
+    Timestamp = UtcTimestamp * HundredNanosPerSecond,
+
+    <<TimeHi:12, TimeMid:16, TimeLow:32>> = <<Timestamp:60>>,
+
+    ClockSequence =
+        %% Use ClockSeq if supplied otherwise Generate random clock sequence.
+        case ClockSeqArg of
+            null        ->
+                random:seed(now()),
+                Rnd = random:uniform(2 bsl 14 - 1),
+                <<Rnd:14>>;
+            ClockSeqArg ->
+                <<_:14>> = ClockSeqArg % make 14 bits wide
+        end,
+    <<ClockSeqHi:6, ClockSeqLow:8>> = ClockSequence,
+
+    %% Get MAC address
+    Node =
+        case NodeArg of
+            null -> get_node();
+            _    -> NodeArg
+        end,
+
+    %% Compose UUIDv1
+    <<TimeLow:32, TimeMid:16, ?UUIDv1:4, TimeHi:12,
+      ?VARIANT:2, ClockSeqLow:8, ClockSeqHi:6, Node/binary>>.
+
+
+%% =============================================================================
+%% UUID v4
+%% =============================================================================
 
 %% @doc  Create a UUID v4 (random) as a binary
 -spec uuid4() -> binary().
@@ -72,6 +124,10 @@ uuid4(U0, U1, U2) ->
 
     <<U0:48, ?UUIDv4:4, U1:12, ?VARIANT:2, U2:62>>.
 
+
+%% =============================================================================
+%% UUID v5
+%% =============================================================================
 
 %% @doc  Create a UUID v5 (name based) as a binary.
 %%       Magic numbers are from Appendix C of the RFC 4122.
@@ -107,6 +163,10 @@ uuid5(Data) ->
     <<TimeLow:32, TimeMid:16, ?UUIDv5:4, TimeHi:12,
       ?VARIANT:2, ClockSeqHi:6, ClockSeqLow:8, Node:48>>.
 
+
+%% =============================================================================
+%% Formatting functions
+%% =============================================================================
 
 %% @doc  Format UUID string from binary
 -spec to_string(Uuid::binary()) -> string().
@@ -146,9 +206,57 @@ to_binary(_) ->
     erlang:error(badarg).
 
 
+
+%% =============================================================================
+%% Helper functions
+%% =============================================================================
+
 %% @private
 %% @doc  Convert from hexadecimal digit represented as string to decimal.
 -spec hex_to_int(Hex::string()) -> integer().
 hex_to_int(Hex) ->
     {ok, [D], []} = io_lib:fread("~16u", Hex),
     D.
+
+
+%% @private
+%% @doc Predicate function for filtering interfaces to use
+-spec filter_if({IfName::string(), IfConfig::list(tuple())}) -> true | false.
+filter_if({IfName, IfConfig}) ->
+    [HasHwAddr] =
+        [true || {IfConfigItem, _} <- IfConfig, IfConfigItem =:= hwaddr],
+
+    case {IfName, HasHwAddr} of
+        % do not use loopback interface
+        {"lo", _}     -> false;
+        % use interface with a hwaddr
+        {_   , true}  -> true;
+        % do not use interfaces without a hwaddr
+        _             -> false
+    end.
+
+
+%% @doc Get node id (IEEE 802 (MAC) address). Create random node id if hardware
+%%      addres can be found.
+-spec get_node() -> binary().
+get_node() ->
+    %% Get interfaces
+    {ok, Ifs0} = inet:getifaddrs(),
+
+    %% Take hwaddr from first interface
+    Ifs1 = lists:filter(fun filter_if/1, Ifs0),
+
+    case length(Ifs1) of
+        %% No interface, create random 48-bit number with bit 8 set to one.
+        0 -> random:seed(now()),
+             Rnd = random:uniform(2 bsl 48 - 1),
+             <<RndHi:7, _:1, RndLow:40>> = <<Rnd:48>>,
+             %% Set 8 to 1
+             <<RndHi:7, 1:1, RndLow:40>>;
+
+        %% Use hardware address from first interface found.
+        _ -> [{_IfName, IfConfig}|_] = Ifs1,
+             [HwAddr] = [HwAddr || {IfConfigItemName, HwAddr}  <- IfConfig,
+                                   IfConfigItemName =:= hwaddr],
+             list_to_binary(HwAddr)
+    end.
