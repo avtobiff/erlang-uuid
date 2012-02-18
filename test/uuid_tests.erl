@@ -32,7 +32,7 @@
 uuid_binary_test() ->
     Uuid = uuid:uuid4(),
 
-    ?assertMatch(<<_U0:48, 4:4, _U1:12, 10:4, _U2:60>>, uuid:uuid4()),
+    ?assertMatch(<<_U0:48, 4:4, _U1:12, 2:2, _U2:62>>, uuid:uuid4()),
 
     ?assertMatch(<<_U0:48, 5:4, _U1:12, _:2, _U2:62>>,
                  uuid:uuid5(dns, "fqdn.example.com")),
