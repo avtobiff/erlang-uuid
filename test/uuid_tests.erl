@@ -122,9 +122,11 @@ uuid_binary_test() ->
 
 representation_test() ->
     Uuid1 = uuid:uuid1(),
+    Uuid3 = uuid:uuid5(dns, "fqdn.example.com"),
     Uuid4 = uuid:uuid4(),
     Uuid5 = uuid:uuid5(dns, "fqdn.example.com"),
     ?assertMatch(Uuid1, uuid:to_binary(uuid:to_string(Uuid1))),
+    ?assertMatch(Uuid3, uuid:to_binary(uuid:to_string(Uuid3))),
     ?assertMatch(Uuid4, uuid:to_binary(uuid:to_string(Uuid4))),
     ?assertMatch(Uuid5, uuid:to_binary(uuid:to_string(Uuid5))).
 
@@ -142,6 +144,7 @@ exceptions_test() ->
     ?assertMatch(ok, try_badarg(to_binary, [0])),
     ?assertMatch(ok, try_badarg(to_string, [0])),
     ?assertMatch(ok, try_badarg(to_string, [0, 0])),
+    ?assertMatch(ok, try_badarg(uuid3,     [0, 0])),
     ?assertMatch(ok, try_badarg(uuid5,     [0, 0])).
 
 urn_test() ->
