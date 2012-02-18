@@ -77,4 +77,10 @@ oid, x500, nil or using a generated UUID either as a binary or as a UUID string
 representation.
 
 
-  Per Andersson <avtobiff@gmail.com>  Sat, 18 Feb 2012 03:25:57 +0100
+UUID v4
+-------
+UUID v4 uses randomness to create a UUID, the six version and variant bits are
+set all the other 122 bits are randomly generated.
+
+
+  Per Andersson <avtobiff@gmail.com>  Sat, 18 Feb 2012 03:40:29 +0100
