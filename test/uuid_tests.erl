@@ -93,7 +93,24 @@ exceptions_test() ->
     ?assertMatch(ok, try_badarg(to_string, [0, 0])),
     ?assertMatch(ok, try_badarg(uuid5,     [0, 0])).
 
+urn_test() ->
+    UuidBin = uuid:uuid4(),
+    UrnBin  = uuid:to_uuid_urn(UuidBin),
+    UuidStr = uuid:to_string(UuidBin),
+    UrnStr  = uuid:to_uuid_urn(UuidStr),
 
+    [$u,$r,$n,$:,$u,$u,$i,$d,$:|UrnUuidBinStr] = UrnBin,
+    ?assertMatch(UrnUuidBinStr, uuid:to_string(UuidBin)),
+
+    [$u,$r,$n,$:,$u,$u,$i,$d,$:|UrnUuidStr] = UrnStr,
+    ?assertMatch(UrnUuidStr, UuidStr),
+
+    ?assertMatch(UrnUuidBinStr, UrnUuidStr),
+
+    ?assertMatch(UrnBin, uuid:to_uuid_urn(UrnBin)).
+
+
+%% helper functions
 try_badarg(F, A) ->
     try
         apply(uuid, F, A)

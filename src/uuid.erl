@@ -36,7 +36,11 @@
 
 -include("uuid.hrl").
 
--export([uuid4/0, uuid5/2, to_string/1, to_string/2, to_binary/1]).
+-export([to_binary/1,
+         to_string/1, to_string/2,
+         to_uuid_urn/1,
+         uuid4/0,
+         uuid5/2]).
 
 
 
@@ -120,6 +124,16 @@ to_string(simple, <<S:128>>) ->
     lists:flatten(io_lib:format("~32.16.0b", [S]));
 to_string(_, _) ->
     erlang:error(badarg).
+
+
+%% @doc  Create UUID URN from UUID binary or string.
+-spec to_uuid_urn(UuidOrUrn::binary() | string()) -> string().
+to_uuid_urn([$u, $r, $n, $:, $u, $u, $i, $d, $: |_] = Urn) ->
+    Urn;
+to_uuid_urn(Uuid) when is_binary(Uuid) ->
+    "urn:uuid:" ++ uuid:to_string(Uuid);
+to_uuid_urn(Uuid) when is_list(Uuid) ->
+    "urn:uuid:" ++ Uuid.
 
 
 %% @doc  Format uuid binary from string
