@@ -19,14 +19,22 @@
 %% @doc
 %% Erlang UUID
 %%
-%% Currently implements UUID v1, v4, and v5 as of RFC 4122.
+%% Currently implements UUID v1, v3, v4, and v5 as of RFC 4122.
 %%
 %% Example usage
 %% <pre>
-%%     1> uuid:to_string(uuid:uuid4()).
-%%     "79f492f8-1337-4200-abcd-92bada1cacao"
-%%     2> uuid:to_string(uuid:uuid5(dns, "fqdn.example.com")).
-%%     "8fd7fa87-4c20-5809-a1b0-e07f5c224f02"
+%%      1> uuid:to_string(uuid:uuid1()).
+%%      "f412e400-c445-1131-bdc6-03f9e757eb34"
+%%      2> uuid:to_string(uuid:uuid3(dns, "fqdn.example.com")).
+%%      "06eaa791-8c2e-3b0d-8a07-c80979fd1b98"
+%%      3> uuid:to_string(uuid:uuid3(uuid:uuid4(), "my name")).
+%%      "fcf82b93-aa5e-3d79-b95e-726420f89e1b"
+%%      4> uuid:to_string(uuid:uuid4()).
+%%      "79f492f8-1337-4200-abcd-92bada1cacao"
+%%      5> uuid:to_string(uuid:uuid5(dns, "fqdn.example.com")).
+%%      "8fd7fa87-4c20-5809-a1b0-e07f5c224f02"
+%%      6> uuid:to_string(uuid:uuid5(uuid:uuid4(), "my name")).
+%%      "6ff58b11-e0b2-536c-b6be-bdccd38836a2"
 %% </pre>
 %% @end
 %% -----------------------------------------------------------------------------
@@ -41,6 +49,7 @@
          to_string/1, to_string/2,
          to_uuid_urn/1,
          uuid1/0, uuid1/2,
+         uuid3/2,
          uuid4/0,
          uuid5/2]).
 
@@ -93,6 +102,35 @@ uuid1(NodeArg, ClockSeqArg) ->
 
 
 %% =============================================================================
+%% UUID v3
+%% =============================================================================
+%% @doc  Create a UUID v3 (name based, MD5 is hashing function) as a binary.
+%%       Magic numbers are from Appendix C of the RFC 4122.
+-spec uuid3(NamespaceOrUuid::atom() | string() | binary(),
+            Name::string()) -> binary().
+uuid3(dns, Name) ->
+    create_namebased_uuid(md5,
+        list_to_binary([<<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name]));
+uuid3(url, Name) ->
+    create_namebased_uuid(md5,
+        list_to_binary([<<16#6ba7b8119dad11d180b400c04fd430c8:128>>, Name]));
+uuid3(oid, Name) ->
+    create_namebased_uuid(md5,
+        list_to_binary([<<16#6ba7b8129dad11d180b400c04fd430c8:128>>, Name]));
+uuid3(x500, Name) ->
+    create_namebased_uuid(md5,
+        list_to_binary([<<16#6ba7b8149dad11d180b400c04fd430c8:128>>, Name]));
+uuid3(nil, Name) ->
+    create_namebased_uuid(md5, list_to_binary([<<0:128>>, Name]));
+uuid3(UuidStr, Name) when is_list(UuidStr) ->
+    create_namebased_uuid(md5, list_to_binary([to_binary(UuidStr), Name]));
+uuid3(UuidBin, Name) when is_binary(UuidBin) ->
+    create_namebased_uuid(md5, list_to_binary([UuidBin, Name]));
+uuid3(_, _) ->
+    erlang:error(badarg).
+
+
+%% =============================================================================
 %% UUID v4
 %% =============================================================================
 
@@ -129,38 +167,52 @@ uuid4(U0, U1, U2) ->
 %% UUID v5
 %% =============================================================================
 
-%% @doc  Create a UUID v5 (name based) as a binary.
+%% @doc  Create a UUID v5 (name based, SHA1 is hashing function) as a binary.
 %%       Magic numbers are from Appendix C of the RFC 4122.
 -spec uuid5(NamespaceOrUuid::atom() | string() | binary(),
             Name::string()) -> binary().
 uuid5(dns, Name) ->
-    uuid5(list_to_binary([<<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name]));
+    create_namebased_uuid(sha1,
+        list_to_binary([<<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name]));
 uuid5(url, Name) ->
-    uuid5(list_to_binary([<<16#6ba7b8119dad11d180b400c04fd430c8:128>>, Name]));
+    create_namebased_uuid(sha1,
+        list_to_binary([<<16#6ba7b8119dad11d180b400c04fd430c8:128>>, Name]));
 uuid5(oid, Name) ->
-    uuid5(list_to_binary([<<16#6ba7b8129dad11d180b400c04fd430c8:128>>, Name]));
+    create_namebased_uuid(sha1,
+        list_to_binary([<<16#6ba7b8129dad11d180b400c04fd430c8:128>>, Name]));
 uuid5(x500, Name) ->
-    uuid5(list_to_binary([<<16#6ba7b8149dad11d180b400c04fd430c8:128>>, Name]));
+    create_namebased_uuid(sha1,
+        list_to_binary([<<16#6ba7b8149dad11d180b400c04fd430c8:128>>, Name]));
 uuid5(nil, Name) ->
-    uuid5(list_to_binary([<<0:128>>, Name]));
+    create_namebased_uuid(sha1, list_to_binary([<<0:128>>, Name]));
 uuid5(UuidStr, Name) when is_list(UuidStr) ->
-    uuid5(list_to_binary([to_binary(UuidStr), Name]));
+    create_namebased_uuid(sha1, list_to_binary([to_binary(UuidStr), Name]));
 uuid5(UuidBin, Name) when is_binary(UuidBin) ->
-    uuid5(list_to_binary([UuidBin, Name]));
+    create_namebased_uuid(sha1, list_to_binary([UuidBin, Name]));
 uuid5(_, _) ->
     erlang:error(badarg).
 
 
 %% @private
-%% @doc  Create a UUID v5 (name based) from binary
--spec uuid5(Data::binary()) -> binary().
-uuid5(Data) ->
+%% @doc  Create a UUID v3 or v5 (name based) from binary, using MD5 or SHA1
+%%       respectively.
+-spec create_namebased_uuid(HashFunction::md5 | sha1,
+                            Data::binary()) -> binary().
+create_namebased_uuid(md5, Data) ->
+    Md5 = crypto:md5(Data),
+    compose_namebased_uuid(?UUIDv3, Md5);
+create_namebased_uuid(sha1, Data) ->
     <<Sha1:128, _:32>> = crypto:sha(Data),
+    compose_namebased_uuid(?UUIDv5, <<Sha1:128>>).
 
+%% @private
+%% @doc  Compose a namebased UUID (v3 or v5) with input hashed data.
+-spec compose_namebased_uuid(Version::3 | 5, Hash::binary()) -> binary().
+compose_namebased_uuid(Version, Hash) ->
     <<TimeLow:32, TimeMid:16, _AndVersion:4, TimeHi:12,
-      _AndReserved:2, ClockSeqHi:6, ClockSeqLow:8, Node:48>> = <<Sha1:128>>,
+      _AndReserved:2, ClockSeqHi:6, ClockSeqLow:8, Node:48>> = Hash,
 
-    <<TimeLow:32, TimeMid:16, ?UUIDv5:4, TimeHi:12,
+    <<TimeLow:32, TimeMid:16, Version:4, TimeHi:12,
       ?VARIANT:2, ClockSeqHi:6, ClockSeqLow:8, Node:48>>.
 
 

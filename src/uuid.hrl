@@ -3,5 +3,6 @@
 
 %% Version
 -define(UUIDv1, 1).
+-define(UUIDv3, 3).
 -define(UUIDv4, 4).
 -define(UUIDv5, 5).
