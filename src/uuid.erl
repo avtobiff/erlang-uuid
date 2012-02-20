@@ -1,5 +1,5 @@
 %% -----------------------------------------------------------------------------
-%% Copyright © 2010 Per Andersson
+%% Copyright © 2010-2012 Per Andersson
 %%
 %% Erlang UUID is free software: you can redistribute it and/or modify
 %% it under the terms of the GNU General Public License as published by
@@ -15,19 +15,26 @@
 %% along with erlang-uuid.  If not, see <http://www.gnu.org/licenses/>.
 %% -----------------------------------------------------------------------------
 %% @author Per Andersson <avtobiff@gmail.com>
-%% @copyright 2010 Per Andersson
+%% @copyright 2010-2012 Per Andersson
 %% @doc
 %% Erlang UUID
 %%
-%% Currently implements UUID v4, UUID generated with (pseudo) random number
-%% generator.
+%% Currently implements UUID v1, v3, v4, and v5 as of RFC 4122.
 %%
 %% Example usage
 %% <pre>
-%%     1> uuid:to_string(uuid:uuid4()).
-%%     "79f492f8-1337-4200-abcd-92bada1cacao"
-%%     2> uuid:to_string(uuid:uuid5(dns, "fqdn.example.com")).
-%%     "8fd7fa87-4c20-5809-a1b0-e07f5c224f02"
+%%      1> uuid:to_string(uuid:uuid1()).
+%%      "f412e400-c445-1131-bdc6-03f9e757eb34"
+%%      2> uuid:to_string(uuid:uuid3(dns, "fqdn.example.com")).
+%%      "06eaa791-8c2e-3b0d-8a07-c80979fd1b98"
+%%      3> uuid:to_string(uuid:uuid3(uuid:uuid4(), "my name")).
+%%      "fcf82b93-aa5e-3d79-b95e-726420f89e1b"
+%%      4> uuid:to_string(uuid:uuid4()).
+%%      "79f492f8-1337-4200-abcd-92bada1cacao"
+%%      5> uuid:to_string(uuid:uuid5(dns, "fqdn.example.com")).
+%%      "8fd7fa87-4c20-5809-a1b0-e07f5c224f02"
+%%      6> uuid:to_string(uuid:uuid5(uuid:uuid4(), "my name")).
+%%      "6ff58b11-e0b2-536c-b6be-bdccd38836a2"
 %% </pre>
 %% @end
 %% -----------------------------------------------------------------------------
@@ -35,63 +42,192 @@
 -module(uuid).
 -author('Per Andersson').
 
--export([uuid4/0, uuid5/2, to_string/1, to_string/2, to_binary/1]).
+-include("uuid.hrl").
+
+-export([get_node/0,
+         to_binary/1,
+         to_string/1, to_string/2,
+         to_uuid_urn/1,
+         uuid1/0, uuid1/2,
+         uuid3/2,
+         uuid4/0,
+         uuid5/2]).
 
 
+%% =============================================================================
+%% UUID v1
+%% =============================================================================
+
+%% @doc Create a UUID v1 (timebased).
+-spec uuid1() -> uuid().
+uuid1() ->
+    uuid1(null, null).
+
+-spec uuid1(NodeArg::binary(), ClockSeqArg::binary()) -> uuid().
+uuid1(NodeArg, ClockSeqArg) ->
+    %% Determine values for UTC timestamp and clock sequence.
+    %% FIXME Use random clock sequence for now ("state is unavailable").
+    UtcTimestamp =
+        calendar:datetime_to_gregorian_seconds(calendar:universal_time()),
+
+    %% Multiply timestamp with amount of hundred nanosecond intervals per
+    %% second since clock have lower resolution than this.
+    HundredNanosPerSecond = round(1.0e9), % to integer()
+    Timestamp = UtcTimestamp * HundredNanosPerSecond,
+
+    <<TimeHi:12, TimeMid:16, TimeLow:32>> = <<Timestamp:60>>,
+
+    ClockSequence =
+        %% Use ClockSeq if supplied otherwise Generate random clock sequence.
+        case ClockSeqArg of
+            null        ->
+                random:seed(now()),
+                Rnd = random:uniform(2 bsl 14 - 1),
+                <<Rnd:14>>;
+            ClockSeqArg ->
+                <<_:14>> = ClockSeqArg % make 14 bits wide
+        end,
+    <<ClockSeqHi:6, ClockSeqLow:8>> = ClockSequence,
+
+    %% Get MAC address
+    Node =
+        case NodeArg of
+            null -> get_node();
+            _    -> NodeArg
+        end,
+
+    %% Compose UUIDv1
+    <<TimeLow:32, TimeMid:16, ?UUIDv1:4, TimeHi:12,
+      ?VARIANT:2, ClockSeqLow:8, ClockSeqHi:6, Node/binary>>.
+
+
+%% =============================================================================
+%% UUID v3
+%% =============================================================================
+%% @doc  Create a UUID v3 (name based, MD5 is hashing function) as a binary.
+%%       Magic numbers are from Appendix C of the RFC 4122.
+-spec uuid3(NamespaceOrUuid::atom() | uuid_string() | uuid(),
+            Name::string()) -> uuid().
+uuid3(dns, Name) ->
+    create_namebased_uuid(md5,
+        list_to_binary([<<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name]));
+uuid3(url, Name) ->
+    create_namebased_uuid(md5,
+        list_to_binary([<<16#6ba7b8119dad11d180b400c04fd430c8:128>>, Name]));
+uuid3(oid, Name) ->
+    create_namebased_uuid(md5,
+        list_to_binary([<<16#6ba7b8129dad11d180b400c04fd430c8:128>>, Name]));
+uuid3(x500, Name) ->
+    create_namebased_uuid(md5,
+        list_to_binary([<<16#6ba7b8149dad11d180b400c04fd430c8:128>>, Name]));
+uuid3(nil, Name) ->
+    create_namebased_uuid(md5, list_to_binary([<<0:128>>, Name]));
+uuid3(UuidStr, Name) when is_list(UuidStr) ->
+    create_namebased_uuid(md5, list_to_binary([to_binary(UuidStr), Name]));
+uuid3(UuidBin, Name) when is_binary(UuidBin) ->
+    create_namebased_uuid(md5, list_to_binary([UuidBin, Name]));
+uuid3(_, _) ->
+    erlang:error(badarg).
+
+
+%% =============================================================================
+%% UUID v4
+%% =============================================================================
 
 %% @doc  Create a UUID v4 (random) as a binary
--spec uuid4() -> binary().
+-spec uuid4() -> uuid().
 uuid4() ->
-    {A1, A2, A3} = now(),
-    random:seed(A1, A2, A3),
+    random:seed(now()),
 
     U0 = random:uniform((2 bsl 48) - 1),
     U1 = random:uniform((2 bsl 12) - 1),
-    U2 = random:uniform((2 bsl 60) - 1),
+    U2 = random:uniform((2 bsl 62) - 1),
 
     uuid4(U0, U1, U2).
 
 
-%% @doc  Create a UUID v5 (name based) as a binary
--spec uuid5(atom(), string()) -> binary().
-uuid5(oid, Name) ->
-    uuid5(list_to_binary([<<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name]));
+%% @private
+%% @doc  Create a 128 bit binary (UUID v4) from input
+-spec uuid4(U0::integer(), U1::integer(), U2::integer()) -> uuid().
+uuid4(U0, U1, U2) ->
+    % Set the four most significant bits (bits 12 through 15) of the
+    % time_hi_and_version field to 0100, corresponding to version 4.
+
+    % Set the two most significant bits (bits 6 and 7) of the
+    % clock_seq_hi_and_reserved to zero and one, respectively.
+    % Corresponding to variant 1 0.
+
+    % Set all other bits pseudo-randomly chosen values
+    % (as generated by caller).
+
+    <<U0:48, ?UUIDv4:4, U1:12, ?VARIANT:2, U2:62>>.
+
+
+%% =============================================================================
+%% UUID v5
+%% =============================================================================
+
+%% @doc  Create a UUID v5 (name based, SHA1 is hashing function) as a binary.
+%%       Magic numbers are from Appendix C of the RFC 4122.
+-spec uuid5(NamespaceOrUuid::atom() | uuid_string() | uuid(),
+            Name::string()) -> uuid().
 uuid5(dns, Name) ->
-    uuid5(list_to_binary([<<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name]));
+    create_namebased_uuid(sha1,
+        list_to_binary([<<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name]));
 uuid5(url, Name) ->
-    uuid5(list_to_binary([<<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name]));
+    create_namebased_uuid(sha1,
+        list_to_binary([<<16#6ba7b8119dad11d180b400c04fd430c8:128>>, Name]));
+uuid5(oid, Name) ->
+    create_namebased_uuid(sha1,
+        list_to_binary([<<16#6ba7b8129dad11d180b400c04fd430c8:128>>, Name]));
 uuid5(x500, Name) ->
-    uuid5(list_to_binary([<<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name]));
+    create_namebased_uuid(sha1,
+        list_to_binary([<<16#6ba7b8149dad11d180b400c04fd430c8:128>>, Name]));
 uuid5(nil, Name) ->
-    uuid5(list_to_binary([<<0:128>>, Name]));
+    create_namebased_uuid(sha1, list_to_binary([<<0:128>>, Name]));
 uuid5(UuidStr, Name) when is_list(UuidStr) ->
-    uuid5(list_to_binary([to_binary(UuidStr), Name]));
+    create_namebased_uuid(sha1, list_to_binary([to_binary(UuidStr), Name]));
 uuid5(UuidBin, Name) when is_binary(UuidBin) ->
-    uuid5(list_to_binary([UuidBin, Name]));
+    create_namebased_uuid(sha1, list_to_binary([UuidBin, Name]));
 uuid5(_, _) ->
     erlang:error(badarg).
 
+
 %% @private
-%% @doc  Create a UUID v5 (name based) from binary
--spec uuid5(binary()) -> binary().
-uuid5(Data) ->
-    <<Sha1:160>> = crypto:sha(Data),
-    <<U0:48, _:4, U1:12, _:2, U2:62, _:32>> = <<Sha1:160>>,
-    <<U0:48, 5:4, U1:12, 10:2, U2:62>>.
+%% @doc  Create a UUID v3 or v5 (name based) from binary, using MD5 or SHA1
+%%       respectively.
+-spec create_namebased_uuid(HashFunction::md5 | sha1,
+                            Data::binary()) -> uuid().
+create_namebased_uuid(md5, Data) ->
+    Md5 = crypto:md5(Data),
+    compose_namebased_uuid(?UUIDv3, Md5);
+create_namebased_uuid(sha1, Data) ->
+    <<Sha1:128, _:32>> = crypto:sha(Data),
+    compose_namebased_uuid(?UUIDv5, <<Sha1:128>>).
+
+%% @private
+%% @doc  Compose a namebased UUID (v3 or v5) with input hashed data.
+-spec compose_namebased_uuid(Version::3 | 5, Hash::binary()) -> uuid().
+compose_namebased_uuid(Version, Hash) ->
+    <<TimeLow:32, TimeMid:16, _AndVersion:4, TimeHi:12,
+      _AndReserved:2, ClockSeqHi:6, ClockSeqLow:8, Node:48>> = Hash,
+
+    <<TimeLow:32, TimeMid:16, Version:4, TimeHi:12,
+      ?VARIANT:2, ClockSeqHi:6, ClockSeqLow:8, Node:48>>.
 
 
-%% @doc  Create a 128 bit binary (UUID v4) from input
--spec uuid4(integer(), integer(), integer()) -> binary().
-uuid4(U0, U1, U2) -> <<U0:48, 4:4, U1:12, 10:4, U2:60>>.
+%% =============================================================================
+%% Formatting functions
+%% =============================================================================
 
-
-%% @doc  Format uuid string from binary
+%% @doc  Format UUID string from binary
+-spec to_string(Uuid::uuid()) -> uuid_string().
 to_string(Uuid) when is_binary(Uuid) ->
     to_string(pretty, Uuid);
 to_string(_) ->
     erlang:error(badarg).
 
--spec to_string(simple | pretty, Uuid::binary()) -> string().
+-spec to_string(simple | pretty, Uuid::uuid()) -> uuid_string().
 to_string(pretty, <<U0:32, U1:16, U2:16, U3:16, U4:48>>) ->
     lists:flatten(io_lib:format(
         "~8.16.0b-~4.16.0b-~4.16.0b-~4.16.0b-~12.16.0b",
@@ -101,8 +237,19 @@ to_string(simple, <<S:128>>) ->
 to_string(_, _) ->
     erlang:error(badarg).
 
+
+%% @doc  Create UUID URN from UUID binary or string.
+-spec to_uuid_urn(UuidOrUrn::uuid() | uuid_string()) -> urn().
+to_uuid_urn([$u, $r, $n, $:, $u, $u, $i, $d, $: |_] = Urn) ->
+    Urn;
+to_uuid_urn(Uuid) when is_binary(Uuid) ->
+    "urn:uuid:" ++ uuid:to_string(Uuid);
+to_uuid_urn(Uuid) when is_list(Uuid) ->
+    "urn:uuid:" ++ Uuid.
+
+
 %% @doc  Format uuid binary from string
--spec to_binary(UuidStr::string()) -> binary().
+-spec to_binary(UuidStr::uuid_string()) -> uuid().
 to_binary(UuidStr) when is_list(UuidStr) ->
     Parts = string:tokens(UuidStr, "$-"),
     [I0, I1, I2, I3, I4] = [hex_to_int(Part) || Part <- Parts],
@@ -110,6 +257,58 @@ to_binary(UuidStr) when is_list(UuidStr) ->
 to_binary(_) ->
     erlang:error(badarg).
 
+
+
+%% =============================================================================
+%% Helper functions
+%% =============================================================================
+
+%% @private
+%% @doc  Convert from hexadecimal digit represented as string to decimal.
+-spec hex_to_int(Hex::string()) -> integer().
 hex_to_int(Hex) ->
     {ok, [D], []} = io_lib:fread("~16u", Hex),
     D.
+
+
+%% @private
+%% @doc Predicate function for filtering interfaces to use
+-spec filter_if({IfName::string(), IfConfig::list(tuple())}) -> true | false.
+filter_if({IfName, IfConfig}) ->
+    [HasHwAddr] =
+        [true || {IfConfigItem, _} <- IfConfig, IfConfigItem =:= hwaddr],
+
+    case {IfName, HasHwAddr} of
+        % do not use loopback interface
+        {"lo", _}     -> false;
+        % use interface with a hwaddr
+        {_   , true}  -> true;
+        % do not use interfaces without a hwaddr
+        _             -> false
+    end.
+
+
+%% @doc Get node id (IEEE 802 (MAC) address). Create random node id if hardware
+%%      addres can be found.
+-spec get_node() -> binary().
+get_node() ->
+    %% Get interfaces
+    {ok, Ifs0} = inet:getifaddrs(),
+
+    %% Take hwaddr from first interface
+    Ifs1 = lists:filter(fun filter_if/1, Ifs0),
+
+    case length(Ifs1) of
+        %% No interface, create random 48-bit number with bit 8 set to one.
+        0 -> random:seed(now()),
+             Rnd = random:uniform(2 bsl 48 - 1),
+             <<RndHi:7, _:1, RndLow:40>> = <<Rnd:48>>,
+             %% Set 8 to 1
+             <<RndHi:7, 1:1, RndLow:40>>;
+
+        %% Use hardware address from first interface found.
+        _ -> [{_IfName, IfConfig}|_] = Ifs1,
+             [HwAddr] = [HwAddr || {IfConfigItemName, HwAddr}  <- IfConfig,
+                                   IfConfigItemName =:= hwaddr],
+             list_to_binary(HwAddr)
+    end.
