@@ -9,7 +9,7 @@ ERL_ROOT  := $(PREFIX)/lib/erlang
 LIBDIR    := /lib
 DISTDIR   := uuid-$(VERSION)
 
-BEAMFILES := $(wildcard ebin/*)
+BEAMFILES := $(wildcard ebin/*.beam) $(wildcard test/*.beam)
 
 all: build
 
@@ -20,7 +20,7 @@ ebin/$(APPFILE): src/$(APPFILE).src
 	cp $< $@
 
 clean:
-	-rm -rf $(BEAMFILES)
+	-rm -rf ebin/$(APPFILE) $(BEAMFILES)
 
 dialyzer:
 	dialyzer -c $(BEAMFILES)
