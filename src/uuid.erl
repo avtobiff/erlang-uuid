@@ -51,7 +51,9 @@
          uuid1/0, uuid1/2,
          uuid3/2,
          uuid4/0,
-         uuid5/2]).
+         uuid5/2,
+         version/1,
+         is_v1/1, is_v3/1, is_v4/1, is_v5/1]).
 
 
 %% =============================================================================
@@ -312,3 +314,31 @@ get_node() ->
                                    IfConfigItemName =:= hwaddr],
              list_to_binary(HwAddr)
     end.
+
+
+%% @doc Return version for supplied UUID.
+-spec version(Uuid::uuid() | uuid_string()) -> integer().
+version(Uuid) when is_binary(Uuid) ->
+    <<_:48, Version:4, _:76>> = Uuid,
+    Version;
+version(UuidStr) when is_list(UuidStr) ->
+    version(uuid:to_binary(UuidStr));
+version(_) ->
+    erlang:error(badarg).
+
+
+%% @doc Predicate for checking that supplied UUID is version 1.
+-spec is_v1(Uuid::uuid() | uuid_string()) -> true | false.
+is_v1(Uuid) -> ?UUIDv1 =:= version(Uuid).
+
+%% @doc Predicate for checking that supplied UUID is version 3.
+-spec is_v3(Uuid::uuid() | uuid_string()) -> true | false.
+is_v3(Uuid) -> ?UUIDv3 =:= version(Uuid).
+
+%% @doc Predicate for checking that supplied UUID is version 4.
+-spec is_v4(Uuid::uuid() | uuid_string()) -> true | false.
+is_v4(Uuid) -> ?UUIDv4 =:= version(Uuid).
+
+%% @doc Predicate for checking that supplied UUID is version 5.
+-spec is_v5(Uuid::uuid() | uuid_string()) -> true | false.
+is_v5(Uuid) -> ?UUIDv5 =:= version(Uuid).

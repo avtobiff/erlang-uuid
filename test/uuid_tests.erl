@@ -145,7 +145,8 @@ exceptions_test() ->
     ?assertMatch(ok, try_badarg(to_string, [0])),
     ?assertMatch(ok, try_badarg(to_string, [0, 0])),
     ?assertMatch(ok, try_badarg(uuid3,     [0, 0])),
-    ?assertMatch(ok, try_badarg(uuid5,     [0, 0])).
+    ?assertMatch(ok, try_badarg(uuid5,     [0, 0])),
+    ?assertMatch(ok, try_badarg(version,   [0])).
 
 urn_test() ->
     UuidBin = uuid:uuid4(),
@@ -162,6 +163,31 @@ urn_test() ->
     ?assertMatch(UrnUuidBinStr, UrnUuidStr),
 
     ?assertMatch(UrnBin, uuid:to_uuid_urn(UrnBin)).
+
+version_test() ->
+    Uuid1 = uuid:uuid1(),
+    Uuid3 = uuid:uuid3(nil, ""),
+    Uuid4 = uuid:uuid4(),
+    Uuid5 = uuid:uuid5(nil, ""),
+
+    ?assertMatch(?UUIDv1, uuid:version(Uuid1)),
+    ?assertMatch(?UUIDv3, uuid:version(Uuid3)),
+    ?assertMatch(?UUIDv4, uuid:version(Uuid4)),
+    ?assertMatch(?UUIDv5, uuid:version(Uuid5)),
+
+    Uuids = [Uuid1, Uuid3, Uuid4, Uuid5],
+
+    ?assertMatch([true, false, false, false],
+                 lists:map(fun uuid:is_v1/1, Uuids)),
+
+    ?assertMatch([false, true, false, false],
+                 lists:map(fun uuid:is_v3/1, Uuids)),
+
+    ?assertMatch([false, false, true, false],
+                 lists:map(fun uuid:is_v4/1, Uuids)),
+
+    ?assertMatch([false, false, false, true],
+                 lists:map(fun uuid:is_v5/1, Uuids)).
 
 
 %% helper functions
