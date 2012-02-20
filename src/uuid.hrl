@@ -4,7 +4,7 @@
 -type urn()::string().
 
 %% Variant, corresponds to variant 1 0 of RFC 4122.
--define(VARIANT, 2).
+-define(VARIANT10, 2#10).
 
 %% Version
 -define(UUIDv1, 1).

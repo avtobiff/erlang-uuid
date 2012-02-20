@@ -9,7 +9,7 @@ ERL_ROOT  := $(PREFIX)/lib/erlang
 LIBDIR    := /lib
 DISTDIR   := uuid-$(VERSION)
 
-BEAMFILES := $(wildcard ebin/*)
+BEAMFILES := $(wildcard ebin/*.beam) $(wildcard test/*.beam)
 
 all: build
 
@@ -20,12 +20,12 @@ ebin/$(APPFILE): src/$(APPFILE).src
 	cp $< $@
 
 clean:
-	-rm -rf $(BEAMFILES)
+	-rm -rf ebin/$(APPFILE) $(BEAMFILES)
 
 dialyzer:
 	dialyzer -c $(BEAMFILES)
 
-test:
+test: build
 	erlc -W +debug_info +compressed +strip -o test/ test/*.erl
 	erl -noshell -pa ebin -pa test -eval "uuid_tests:test()" -eval "init:stop()"
 

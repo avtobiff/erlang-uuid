@@ -36,86 +36,86 @@ uuid_binary_test() ->
 
     %% UUID v1
     NodeId = uuid:get_node(),
-    ?assertMatch(<<_U0:48, ?UUIDv1:4, _U1:12, ?VARIANT:2, _U2:14,
+    ?assertMatch(<<_U0:48, ?UUIDv1:4, _U1:12, ?VARIANT10:2, _U2:14,
                    NodeId/binary>>,
                  uuid:uuid1()),
 
     NilNode = <<0:48>>,
     ClockSeq = <<ClockSeqHi:6, ClockSeqLow:8>> = <<0:14>>,
-    ?assertMatch(<<_U0:48, ?UUIDv1:4, _U1:12, ?VARIANT:2,
+    ?assertMatch(<<_U0:48, ?UUIDv1:4, _U1:12, ?VARIANT10:2,
                    ClockSeqLow:8, ClockSeqHi:6, NilNode/binary>>,
                  uuid:uuid1(NilNode, ClockSeq)),
 
     %% UUID v3
-    ?assertMatch(<<_U0:48, ?UUIDv3:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv3:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid3(dns, "fqdn.example.com")),
     ?assertEqual(uuid:uuid3(dns, "fqdn.example.com"),
                  uuid:uuid3(dns, "fqdn.example.com")),
 
-    ?assertMatch(<<_U0:48, ?UUIDv3:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv3:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid3(oid, "2.5.6")),
     ?assertEqual(uuid:uuid3(oid, "2.5.6"), uuid:uuid3(oid, "2.5.6")),
 
-    ?assertMatch(<<_U0:48, ?UUIDv3:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv3:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid3(url, "http://fqdn.example.com/path")),
     ?assertEqual(uuid:uuid3(url, "http://fqdn.example.com/path"),
                  uuid:uuid3(url, "http://fqdn.example.com/path")),
 
-    ?assertMatch(<<_U0:48, ?UUIDv3:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv3:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid3(x500, "cn=John Doe, o=Acme, Inc., c=US")),
     ?assertEqual(uuid:uuid3(x500, "cn=John Doe, o=Acme, Inc., c=US"),
                  uuid:uuid3(x500, "cn=John Doe, o=Acme, Inc., c=US")),
 
-    ?assertMatch(<<_U0:48, ?UUIDv3:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv3:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid3(nil, "my own unique name")),
     ?assertEqual(uuid:uuid3(nil, "my own unique name"),
                  uuid:uuid3(nil, "my own unique name")),
 
-    ?assertMatch(<<_U0:48, ?UUIDv3:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv3:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid3(Uuid, "fqdn.example.com")),
     ?assertEqual(uuid:uuid3(Uuid, "fqdn.example.com"),
                  uuid:uuid3(Uuid, "fqdn.example.com")),
 
-    ?assertMatch(<<_U0:48, ?UUIDv3:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv3:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid3(uuid:to_string(Uuid), "fqdn.example.com")),
     ?assertEqual(uuid:uuid3(uuid:to_string(Uuid), "fqdn.example.com"),
                  uuid:uuid3(uuid:to_string(Uuid), "fqdn.example.com")),
 
     %% UUID v4
-    ?assertMatch(<<_U0:48, ?UUIDv4:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv4:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid4()),
 
     %% UUID v5
-    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid5(dns, "fqdn.example.com")),
     ?assertEqual(uuid:uuid5(dns, "fqdn.example.com"),
                  uuid:uuid5(dns, "fqdn.example.com")),
 
-    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid5(oid, "2.5.6")),
     ?assertEqual(uuid:uuid5(oid, "2.5.6"), uuid:uuid5(oid, "2.5.6")),
 
-    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid5(url, "http://fqdn.example.com/path")),
     ?assertEqual(uuid:uuid5(url, "http://fqdn.example.com/path"),
                  uuid:uuid5(url, "http://fqdn.example.com/path")),
 
-    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid5(x500, "cn=John Doe, o=Acme, Inc., c=US")),
     ?assertEqual(uuid:uuid5(x500, "cn=John Doe, o=Acme, Inc., c=US"),
                  uuid:uuid5(x500, "cn=John Doe, o=Acme, Inc., c=US")),
 
-    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid5(nil, "my own unique name")),
     ?assertEqual(uuid:uuid5(nil, "my own unique name"),
                  uuid:uuid5(nil, "my own unique name")),
 
-    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid5(Uuid, "fqdn.example.com")),
     ?assertEqual(uuid:uuid5(Uuid, "fqdn.example.com"),
                  uuid:uuid5(Uuid, "fqdn.example.com")),
 
-    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT:2, _U2:62>>,
+    ?assertMatch(<<_U0:48, ?UUIDv5:4, _U1:12, ?VARIANT10:2, _U2:62>>,
                  uuid:uuid5(uuid:to_string(Uuid), "fqdn.example.com")),
     ?assertEqual(uuid:uuid5(uuid:to_string(Uuid), "fqdn.example.com"),
                  uuid:uuid5(uuid:to_string(Uuid), "fqdn.example.com")).
@@ -130,7 +130,7 @@ representation_test() ->
     ?assertMatch(Uuid4, uuid:to_binary(uuid:to_string(Uuid4))),
     ?assertMatch(Uuid5, uuid:to_binary(uuid:to_string(Uuid5))).
 
-tostring_test() ->
+conversion_test() ->
     SimpleUuid = "8fd7fa874c205809a1b0e07f5c224f02",
     PrettyUuid = "8fd7fa87-4c20-5809-a1b0-e07f5c224f02",
     ?assertMatch(PrettyUuid,
@@ -138,14 +138,22 @@ tostring_test() ->
     ?assertMatch(PrettyUuid,
                  uuid:to_string(pretty, uuid:uuid5(dns, "fqdn.example.com"))),
     ?assertMatch(SimpleUuid,
-                 uuid:to_string(simple, uuid:uuid5(dns, "fqdn.example.com"))).
+                 uuid:to_string(simple, uuid:uuid5(dns, "fqdn.example.com"))),
+
+    ?assertMatch(PrettyUuid,
+                 uuid:to_string(uuid:to_binary(SimpleUuid))),
+    ?assertMatch(SimpleUuid,
+                 uuid:to_string(simple, uuid:to_binary(SimpleUuid))),
+    ?assertMatch(PrettyUuid,
+                 uuid:to_string(pretty, uuid:to_binary(PrettyUuid))).
 
 exceptions_test() ->
     ?assertMatch(ok, try_badarg(to_binary, [0])),
     ?assertMatch(ok, try_badarg(to_string, [0])),
     ?assertMatch(ok, try_badarg(to_string, [0, 0])),
     ?assertMatch(ok, try_badarg(uuid3,     [0, 0])),
-    ?assertMatch(ok, try_badarg(uuid5,     [0, 0])).
+    ?assertMatch(ok, try_badarg(uuid5,     [0, 0])),
+    ?assertMatch(ok, try_badarg(version,   [0])).
 
 urn_test() ->
     UuidBin = uuid:uuid4(),
@@ -162,6 +170,40 @@ urn_test() ->
     ?assertMatch(UrnUuidBinStr, UrnUuidStr),
 
     ?assertMatch(UrnBin, uuid:to_uuid_urn(UrnBin)).
+
+version_test() ->
+    Uuid1 = uuid:uuid1(),
+    Uuid3 = uuid:uuid3(nil, ""),
+    Uuid4 = uuid:uuid4(),
+    Uuid5 = uuid:uuid5(nil, ""),
+
+    ?assertMatch(?UUIDv1, uuid:version(Uuid1)),
+    ?assertMatch(?UUIDv3, uuid:version(Uuid3)),
+    ?assertMatch(?UUIDv4, uuid:version(Uuid4)),
+    ?assertMatch(?UUIDv5, uuid:version(Uuid5)),
+
+    Uuids = [Uuid1, Uuid3, Uuid4, Uuid5],
+
+    ?assertMatch([true, false, false, false],
+                 lists:map(fun uuid:is_v1/1, Uuids)),
+
+    ?assertMatch([false, true, false, false],
+                 lists:map(fun uuid:is_v3/1, Uuids)),
+
+    ?assertMatch([false, false, true, false],
+                 lists:map(fun uuid:is_v4/1, Uuids)),
+
+    ?assertMatch([false, false, false, true],
+                 lists:map(fun uuid:is_v5/1, Uuids)),
+
+    ?assertMatch([true, true, true, true],
+                 lists:map(fun uuid:is_rfc4122/1, Uuids)),
+    ?assertMatch([true, true, true, true],
+                 lists:map(fun uuid:is_valid/1, Uuids)),
+
+    ?assertMatch(false, uuid:is_rfc4122(<<1:128>>)),
+    ?assertMatch(false, uuid:is_valid(<<1:128>>)),
+    ?assertMatch(true, uuid:is_valid(<<0:128>>)).
 
 
 %% helper functions
