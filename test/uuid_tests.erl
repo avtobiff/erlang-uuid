@@ -130,7 +130,7 @@ representation_test() ->
     ?assertMatch(Uuid4, uuid:to_binary(uuid:to_string(Uuid4))),
     ?assertMatch(Uuid5, uuid:to_binary(uuid:to_string(Uuid5))).
 
-tostring_test() ->
+conversion_test() ->
     SimpleUuid = "8fd7fa874c205809a1b0e07f5c224f02",
     PrettyUuid = "8fd7fa87-4c20-5809-a1b0-e07f5c224f02",
     ?assertMatch(PrettyUuid,
@@ -138,7 +138,14 @@ tostring_test() ->
     ?assertMatch(PrettyUuid,
                  uuid:to_string(pretty, uuid:uuid5(dns, "fqdn.example.com"))),
     ?assertMatch(SimpleUuid,
-                 uuid:to_string(simple, uuid:uuid5(dns, "fqdn.example.com"))).
+                 uuid:to_string(simple, uuid:uuid5(dns, "fqdn.example.com"))),
+
+    ?assertMatch(PrettyUuid,
+                 uuid:to_string(uuid:to_binary(SimpleUuid))),
+    ?assertMatch(SimpleUuid,
+                 uuid:to_string(simple, uuid:to_binary(SimpleUuid))),
+    ?assertMatch(PrettyUuid,
+                 uuid:to_string(pretty, uuid:to_binary(PrettyUuid))).
 
 exceptions_test() ->
     ?assertMatch(ok, try_badarg(to_binary, [0])),

@@ -247,20 +247,32 @@ to_string(_, _) ->
 -spec to_uuid_urn(UuidOrUrn::uuid() | uuid_string()) -> urn().
 to_uuid_urn([$u, $r, $n, $:, $u, $u, $i, $d, $: |_] = Urn) ->
     Urn;
-to_uuid_urn(Uuid) when is_binary(Uuid) ->
+to_uuid_urn(<<_:128>> = Uuid) ->
     "urn:uuid:" ++ uuid:to_string(Uuid);
 to_uuid_urn(Uuid) when is_list(Uuid) ->
     "urn:uuid:" ++ Uuid.
 
 
-%% @doc  Format uuid binary from string
+%% @doc Format UUID binary from string.
 -spec to_binary(UuidStr::uuid_string()) -> uuid().
 to_binary(UuidStr) when is_list(UuidStr) ->
-    Parts = string:tokens(UuidStr, "$-"),
-    [I0, I1, I2, I3, I4] = [hex_to_int(Part) || Part <- Parts],
-    <<I0:32, I1:16, I2:16, I3:16, I4:48>>;
+    case length(UuidStr) of
+        36 -> to_binary(pretty, UuidStr);
+        32 -> to_binary(simple, UuidStr);
+        _  -> erlang:error(badarg)
+    end;
 to_binary(_) ->
     erlang:error(badarg).
+
+%% @private
+-spec to_binary(simple | pretty, UuidStr::uuid_string()) -> uuid().
+to_binary(simple, UuidStr) ->
+    Num = hex_to_int(UuidStr),
+    <<Num:128>>;
+to_binary(pretty, UuidStr) ->
+    Parts = string:tokens(UuidStr, "$-"),
+    [I0, I1, I2, I3, I4] = [hex_to_int(Part) || Part <- Parts],
+    <<I0:32, I1:16, I2:16, I3:16, I4:48>>.
 
 
 
