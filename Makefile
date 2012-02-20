@@ -25,7 +25,7 @@ clean:
 dialyzer:
 	dialyzer -c $(BEAMFILES)
 
-test:
+test: build
 	erlc -W +debug_info +compressed +strip -o test/ test/*.erl
 	erl -noshell -pa ebin -pa test -eval "uuid_tests:test()" -eval "init:stop()"
 
