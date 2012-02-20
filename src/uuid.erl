@@ -379,6 +379,8 @@ is_rfc4122(Uuid) ->
 
 %% @doc Predicate for checking that supplied UUID is valid.
 -spec is_valid(Uuid::uuid() | uuid_string()) -> true | false.
+%% XXX special nil UUID is valid
+is_valid(<<0:128>>) -> true;
 is_valid(Uuid = <<_:128>>) ->
     Variant = is_rfc4122(Uuid),
     Version = version(Uuid),

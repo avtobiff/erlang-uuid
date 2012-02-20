@@ -201,8 +201,9 @@ version_test() ->
     ?assertMatch([true, true, true, true],
                  lists:map(fun uuid:is_valid/1, Uuids)),
 
-    ?assertMatch(false, uuid:is_rfc4122(<<0:128>>)),
-    ?assertMatch(false, uuid:is_valid(<<0:128>>)).
+    ?assertMatch(false, uuid:is_rfc4122(<<1:128>>)),
+    ?assertMatch(false, uuid:is_valid(<<1:128>>)),
+    ?assertMatch(true, uuid:is_valid(<<0:128>>)).
 
 
 %% helper functions
