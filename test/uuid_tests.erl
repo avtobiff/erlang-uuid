@@ -187,7 +187,15 @@ version_test() ->
                  lists:map(fun uuid:is_v4/1, Uuids)),
 
     ?assertMatch([false, false, false, true],
-                 lists:map(fun uuid:is_v5/1, Uuids)).
+                 lists:map(fun uuid:is_v5/1, Uuids)),
+
+    ?assertMatch([true, true, true, true],
+                 lists:map(fun uuid:is_rfc4122/1, Uuids)),
+    ?assertMatch([true, true, true, true],
+                 lists:map(fun uuid:is_valid/1, Uuids)),
+
+    ?assertMatch(false, uuid:is_rfc4122(<<0:128>>)),
+    ?assertMatch(false, uuid:is_valid(<<0:128>>)).
 
 
 %% helper functions
