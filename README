@@ -83,4 +83,32 @@ UUID v4 uses randomness to create a UUID, the six version and variant bits are
 set all the other 122 bits are randomly generated.
 
 
-  Per Andersson <avtobiff@gmail.com>  Sat, 18 Feb 2012 03:40:29 +0100
+UTILITIES
+---------
+There are several utility functions for introspection of UUIDs.
+
+It is possible to extract variant and version with the functions with the same
+names, both take a UUID binary or UUID string representation.
+
+There are several predicate functions that takes a UUID binary or UUID string
+representation and returns a thruth value. The predicate is_rfc4122/1 returns
+true if the UUID implements RFC 4122 (variant 1 0, version 1, 3, 4, and 5). The
+predicates is_vN/1, where N is either 1, 3, 4, or 5.
+
+Example usage:
+
+    1> uuid:version(uuid:uuid4()).
+    4
+    2> uuid:is_v1(uuid:uuid4()).
+    false
+    3> uuid:is_v1(uuid:uuid1()).
+    true
+    4> uuid:is_rfc4122(uuid:uuid4()).
+    true
+    5> uuid:is_valid(uuid:uuid4()).
+    true
+    6> uuid:is_valid(<<1:128>>).
+    false
+
+
+  Per Andersson <avtobiff@gmail.com>  Mon, 20 Feb 2012 21:01:47 +0100
