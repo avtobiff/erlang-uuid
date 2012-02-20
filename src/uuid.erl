@@ -227,7 +227,7 @@ compose_namebased_uuid(Version, Hash) ->
 
 %% @doc  Format UUID string from binary
 -spec to_string(Uuid::uuid()) -> uuid_string().
-to_string(Uuid) when is_binary(Uuid) ->
+to_string(<<_:128>> = Uuid) when is_binary(Uuid) ->
     to_string(pretty, Uuid);
 to_string(_) ->
     erlang:error(badarg).
@@ -333,7 +333,7 @@ get_node() ->
 
 %% @doc Return version for supplied UUID.
 -spec version(Uuid::uuid() | uuid_string()) -> integer().
-version(Uuid) when is_binary(Uuid) ->
+version(<<_:128>> = Uuid) ->
     <<_:48, Version:4, _:76>> = Uuid,
     Version;
 version(UuidStr) when is_list(UuidStr) ->
