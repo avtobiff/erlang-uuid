@@ -377,7 +377,7 @@ is_rfc4122(Uuid) ->
     ?VARIANT10 =:= variant(Uuid) bsr 1.
 
 
-%% @doc Predicate for checkitg that supplied UUID is valid.
+%% @doc Predicate for checking that supplied UUID is valid.
 -spec is_valid(Uuid::uuid() | uuid_string()) -> true | false.
 is_valid(Uuid = <<_:128>>) ->
     Variant = is_rfc4122(Uuid),
