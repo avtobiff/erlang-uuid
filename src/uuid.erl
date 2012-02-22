@@ -69,7 +69,7 @@
 uuid1() ->
     uuid1(null, null).
 
--spec uuid1(NodeArg::binary(), ClockSeqArg::binary()) -> uuid().
+-spec uuid1(NodeArg::binary() | null, ClockSeqArg::binary() | null) -> uuid().
 uuid1(NodeArg, ClockSeqArg) ->
     %% Determine values for UTC timestamp and clock sequence.
     %% FIXME Use random clock sequence for now ("state is unavailable").
