@@ -198,12 +198,17 @@ version_test() ->
     ?assertMatch([false, false, false, true],
                  lists:map(fun uuid:is_v5/1, Uuids)),
 
-    ?assertMatch([true, true, true, true],
-                 lists:map(fun uuid:is_rfc4122/1, Uuids)),
+    ?assertMatch([rfc4122, rfc4122, rfc4122, rfc4122],
+                 lists:map(fun uuid:variant/1, Uuids)),
     ?assertMatch([true, true, true, true],
                  lists:map(fun uuid:is_valid/1, Uuids)),
 
-    ?assertMatch(false, uuid:is_rfc4122(<<1:128>>)),
+    ?assertMatch([reserved_ncs, reserved_microsoft, reserved_future],
+                 lists:map(fun uuid:variant/1,
+                           [<<0:64, 0:1, 0:1, 0:1, 0:61>>,
+                            <<0:64, 1:1, 1:1, 0:1, 0:61>>,
+                            <<0:64, 1:1, 1:1, 1:1, 0:61>>])),
+
     ?assertMatch(false, uuid:is_valid(<<1:128>>)),
     ?assertMatch(true, uuid:is_valid(<<0:128>>)).
 

@@ -55,7 +55,6 @@
          uuid5/2,
          variant/1,
          version/1,
-         is_rfc4122/1,
          is_v1/1, is_v3/1, is_v4/1, is_v5/1,
          is_valid/1]).
 
@@ -344,10 +343,18 @@ version(_) ->
 
 
 %% @doc Return variant for supplied UUID.
--spec variant(Uuid::uuid() | uuid_string()) -> integer().
+-spec variant(Uuid::uuid() | uuid_string()) -> reserved_microsoft
+                                             | reserved_ncs
+                                             | resered_future
+                                             | rfc4122.
 variant(<<_:128>> = Uuid) ->
-    <<_:64, Variant:3, _:61>> = Uuid,
-    Variant;
+    <<_:64, V2:1, V1:1, V0:1, _:61>> = Uuid,
+    case {V2, V1, V0} of
+        {0, _, _} -> reserved_ncs;
+        {1, 0, _} -> rfc4122;
+        {1, 1, 0} -> reserved_microsoft;
+        {1, 1, 1} -> reserved_future
+    end;
 variant(UuidStr) when is_list(UuidStr) ->
     variant(uuid:to_binary(UuidStr));
 variant(_) ->
@@ -371,28 +378,28 @@ is_v4(Uuid) -> ?UUIDv4 =:= version(Uuid).
 is_v5(Uuid) -> ?UUIDv5 =:= version(Uuid).
 
 
-%% @doc Predicate for checking that supplied UUID is variant 1 0 from RFC 4122.
--spec is_rfc4122(UUid::uuid() | uuid_string()) -> true | false.
-is_rfc4122(Uuid) ->
-    %% Ignore last bit since we only care that it is 1 0 x.
-    ?VARIANT10 =:= variant(Uuid) bsr 1.
-
-
 %% @doc Predicate for checking that supplied UUID is valid.
 -spec is_valid(Uuid::uuid() | uuid_string()) -> true | false.
 %% XXX special nil UUID is valid
 is_valid(<<0:128>>) -> true;
 is_valid(Uuid = <<_:128>>) ->
-    Variant = is_rfc4122(Uuid),
-    Version = version(Uuid),
-    case {Variant, Version} of
-        {true, ?UUIDv1} -> true;
-        {true, ?UUIDv3} -> true;
-        {true, ?UUIDv4} -> true;
-        {true, ?UUIDv5} -> true;
-        _               -> false
-    end;
+    is_valid(variant(Uuid), Uuid);
 is_valid(UuidStr) when is_list(UuidStr) ->
     is_valid(to_binary(UuidStr));
 is_valid(_) ->
     erlang:error(badarg).
+
+%% @private
+%% @doc Predicate for checking that supplied UUID is valid, takes variant as
+%%      argument and returns validity depending on UUID version.
+-spec is_valid(Variant::atom(), Uuid::uuid()) -> true | false.
+is_valid(rfc4122, Uuid) ->
+    Version = version(Uuid),
+    case Version of
+        ?UUIDv1 -> true;
+        ?UUIDv3 -> true;
+        ?UUIDv4 -> true;
+        ?UUIDv5 -> true;
+        _       -> false
+    end;
+is_valid(_, _) -> false.
