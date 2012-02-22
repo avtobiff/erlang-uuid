@@ -1,5 +1,6 @@
 %% -----------------------------------------------------------------------------
 %% Copyright © 2010-2012 Per Andersson
+%% Copyright © 2012 Bip Thelin
 %%
 %% Erlang UUID is free software: you can redistribute it and/or modify
 %% it under the terms of the GNU General Public License as published by
