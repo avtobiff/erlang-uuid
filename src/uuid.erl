@@ -39,6 +39,8 @@
 %%      "6ff58b11-e0b2-536c-b6be-bdccd38836a2"
 %% </pre>
 %% @end
+%% @reference See <a href="http://www.ietf.org/rfc/rfc4122.txt">RFC 4122</a>
+%%            for more information.
 %% -----------------------------------------------------------------------------
 
 -module(uuid).
