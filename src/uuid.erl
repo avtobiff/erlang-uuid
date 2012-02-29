@@ -323,9 +323,7 @@ get_node() ->
 
     case length(Ifs1) of
         %% No interface, create random 48-bit number with bit 8 set to one.
-        0 -> random:seed(now()),
-             Rnd = random:uniform(2 bsl 48 - 1),
-             <<RndHi:7, _:1, RndLow:40>> = <<Rnd:48>>,
+        0 -> <<RndHi:7, _:1, RndLow:40>> = crypto:rand_bytes(6),
              %% Set 8 to 1
              <<RndHi:7, 1:1, RndLow:40>>;
 
