@@ -1,8 +1,8 @@
 #!/usr/bin/make -f
 
 APPFILE   := uuid.app
-VERSION   := $(shell sed -n '/vsn/ {s/.*,\s*"\([0-9][0-9.]*\)".*/\1/; p}' \
-                         src/$(APPFILE).src)
+VERSION   := $(shell sed -n -e '/vsn/ {s/.*,\s*"\([0-9][0-9.]*\)".*/\1/' \
+                            -e 'p' -e '}' src/$(APPFILE).src)
 
 PREFIX    ?= /usr
 ERL_ROOT  := $(PREFIX)/lib/erlang
