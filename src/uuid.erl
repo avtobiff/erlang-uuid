@@ -59,7 +59,8 @@
          variant/1,
          version/1,
          is_v1/1, is_v3/1, is_v4/1, is_v5/1,
-         is_valid/1]).
+         is_valid/1,
+         now_xor_pid/0]).
 
 
 %% =============================================================================
@@ -89,7 +90,7 @@ uuid1(NodeArg, ClockSeqArg) ->
         %% Use ClockSeq if supplied otherwise Generate random clock sequence.
         case ClockSeqArg of
             null        ->
-                random:seed(now()),
+                random:seed(now_xor_pid()),
                 Rnd = random:uniform(2 bsl 14 - 1),
                 <<Rnd:14>>;
             ClockSeqArg ->
@@ -145,7 +146,7 @@ uuid3(_, _) ->
 %% @doc  Create a UUID v4 (random) as a binary
 -spec uuid4() -> uuid().
 uuid4() ->
-    random:seed(now()),
+    random:seed(now_xor_pid()),
 
     U0 = random:uniform((2 bsl 32) - 1),
     U1 = random:uniform((2 bsl 16) - 1),
@@ -407,3 +408,15 @@ is_valid(rfc4122, Uuid) ->
         _       -> false
     end;
 is_valid(_, _) -> false.
+
+
+%% @private
+%% @doc Utility function for getting now() and perform bitwise xor with pid.
+%%      Used for random seed.
+-spec now_xor_pid() -> {pos_integer(), pos_integer(), pos_integer()}.
+now_xor_pid() ->
+    [_|PidPartsStr] =
+        re:split(pid_to_list(self()), "[<.>]", [{return, list}, trim]),
+    PidSum = lists:sum(lists:map(fun erlang:list_to_integer/1, PidPartsStr)),
+    {N0, N1, N2} = now(),
+    {N0 bxor PidSum, N1 bxor PidSum, N2 bxor PidSum}.
