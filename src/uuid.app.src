@@ -3,5 +3,5 @@
   {vsn, "0.4.0"},
   {modules, [uuid]},
   {registered, []},
-  {applications, [stdlib]},
+  {applications, [stdlib, crypto]},
   {env, []}]}.
