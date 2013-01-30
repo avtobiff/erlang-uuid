@@ -300,14 +300,14 @@ hex_to_int(Hex) ->
 %% @doc Predicate function for filtering interfaces to use
 -spec filter_if({IfName::string(), IfConfig::list(tuple())}) -> true | false.
 filter_if({IfName, IfConfig}) ->
-    [HasHwAddr] =
+    HasHwAddr =
         [true || {IfConfigItem, _} <- IfConfig, IfConfigItem =:= hwaddr],
 
     case {IfName, HasHwAddr} of
         % do not use loopback interface
         {"lo", _}     -> false;
         % use interface with a hwaddr
-        {_   , true}  -> true;
+        {_   , [true]}  -> true;
         % do not use interfaces without a hwaddr
         _             -> false
     end.
