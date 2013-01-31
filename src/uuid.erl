@@ -299,19 +299,8 @@ hex_to_int(Hex) ->
 %% @private
 %% @doc Predicate function for filtering interfaces to use
 -spec filter_if({IfName::string(), IfConfig::list(tuple())}) -> true | false.
-filter_if({IfName, IfConfig}) ->
-    [HasHwAddr] =
-        [true || {IfConfigItem, _} <- IfConfig, IfConfigItem =:= hwaddr],
-
-    case {IfName, HasHwAddr} of
-        % do not use loopback interface
-        {"lo", _}     -> false;
-        % use interface with a hwaddr
-        {_   , true}  -> true;
-        % do not use interfaces without a hwaddr
-        _             -> false
-    end.
-
+filter_if({"lo", IfConfig}) -> false; % do not use loopback interface
+filter_if({IfName, IfConfig}) -> lists:keyfind(hwaddr, 1, IfConfig) =/= false.
 
 %% @doc Get node id (IEEE 802 (MAC) address). Create random node id if hardware
 %%      addres can be found.
