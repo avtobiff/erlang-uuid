@@ -213,6 +213,15 @@ version_test() ->
     ?assertMatch(false, uuid:is_valid(<<1:128>>)),
     ?assertMatch(true, uuid:is_valid(<<0:128>>)).
 
+stress_test_() ->
+    {inparallel,
+     {"uuid4 stress test.", {timeout, 10000, uuid4_stress()}}}.
+
+uuid4_stress() ->
+    Count = 100000,
+    Uuids = [uuid:uuid4() || _ <- lists:seq(1, Count)],
+    Uniqs = lists:usort(Uuids),
+    ?_assertEqual(Count, length(Uniqs)).
 
 %% helper functions
 try_badarg(F, A) ->

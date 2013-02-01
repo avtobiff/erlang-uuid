@@ -412,12 +412,12 @@ is_valid(_, _) -> false.
 
 
 %% @private
-%% @doc Utility function for getting now() and perform bitwise xor with pid.
-%%      Used for random seed.
+%% @doc Utility function for getting random bytes and perform bitwise xor with
+%%      pid. Used for random seed.
 -spec now_xor_pid() -> {pos_integer(), pos_integer(), pos_integer()}.
 now_xor_pid() ->
     [_|PidPartsStr] =
         re:split(pid_to_list(self()), "[<.>]", [{return, list}, trim]),
     PidSum = lists:sum(lists:map(fun erlang:list_to_integer/1, PidPartsStr)),
-    {N0, N1, N2} = now(),
+    <<N0:32, N1:32, N2:32>> = crypto:rand_bytes(12),
     {N0 bxor PidSum, N1 bxor PidSum, N2 bxor PidSum}.
