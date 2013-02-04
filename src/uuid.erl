@@ -397,8 +397,7 @@ is_valid(_, _) -> false.
 %%      Used for random seed.
 -spec now_xor_pid() -> {pos_integer(), pos_integer(), pos_integer()}.
 now_xor_pid() ->
-    [_|PidPartsStr] =
-        re:split(pid_to_list(self()), "[<.>]", [{return, list}, trim]),
-    PidSum = lists:sum(lists:map(fun erlang:list_to_integer/1, PidPartsStr)),
+    [X,Y,Z] = string:tokens(pid_to_list(self()), "<.> "),
+    PidSum = list_to_integer(X) + list_to_integer(Y) + list_to_integer(Z),
     {N0, N1, N2} = now(),
     {N0 bxor PidSum, N1 bxor PidSum, N2 bxor PidSum}.
