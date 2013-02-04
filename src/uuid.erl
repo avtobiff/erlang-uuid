@@ -304,7 +304,7 @@ hwaddr_random() ->
 
 -spec hwaddr_find([{IfName::string(), IfConfig::list(tuple())}]) -> binary().
 hwaddr_find([]) -> hwaddr_random(); % default to random
-hwaddr_find([{"lo", IfConfig}|Rest]) -> hwaddr_find(Rest); % do not use loopback interface
+hwaddr_find([{"lo", _IfConfig}|Rest]) -> hwaddr_find(Rest); % do not use loopback interface
 hwaddr_find([{_IfName, IfConfig}|Rest]) ->
     case lists:keyfind(hwaddr, 1, IfConfig) of
         false -> hwaddr_find(Rest); % keep looking
