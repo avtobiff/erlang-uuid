@@ -295,22 +295,6 @@ hex_to_int(Hex) ->
     {ok, [D], []} = io_lib:fread("~16u", Hex),
     D.
 
--spec hwaddr_random() -> binary().
-hwaddr_random() ->
-    %% No interface, create random 48-bit number with bit 8 set to one.
-   <<RndHi:7, _:1, RndLow:40>> = crypto:rand_bytes(6),
-   %% Set 8 to 1
-   <<RndHi:7, 1:1, RndLow:40>>.
-
--spec hwaddr_find([{IfName::string(), IfConfig::[tuple()]}]) -> binary().
-hwaddr_find([]) -> hwaddr_random(); % default to random
-hwaddr_find([{"lo", IfConfig}|Rest]) -> hwaddr_find(Rest); % do not use loopback interface
-hwaddr_find([{_IfName, IfConfig}|Rest]) ->
-    case lists:keyfind(hwaddr, 1, IfConfig) of
-        false -> hwaddr_find(Rest); % keep looking
-        {hwaddr, HwAddr} -> list_to_binary(HwAddr)
-    end.
-
 %% @doc Get node id (IEEE 802 (MAC) address). Create random node id if hardware
 %%      addres can be found.
 -spec get_node() -> binary().
@@ -318,71 +302,29 @@ get_node() ->
     {ok, Ifs0} = inet:getifaddrs(),
     hwaddr_find(Ifs0).
 
-%% @doc Return version for supplied UUID.
--spec version(Uuid::uuid() | uuid_string()) -> integer().
-version(<<_:128>> = Uuid) ->
-    <<_:48, Version:4, _:76>> = Uuid,
-    Version;
-version(UuidStr) when is_list(UuidStr) ->
-    version(uuid:to_binary(UuidStr));
-version(_) ->
-    erlang:error(badarg).
+-spec hwaddr_find([{IfName::string(), IfConfig::[tuple()]}]) -> binary().
+hwaddr_find([]) -> hwaddr_random(); % default to random
+hwaddr_find([{"lo", _IfConfig}|Rest]) -> hwaddr_find(Rest); % don't use loopback
+hwaddr_find([{_IfName, IfConfig}|Rest]) ->
+    case lists:keyfind(hwaddr, 1, IfConfig) of
+        false -> hwaddr_find(Rest); % keep looking
+        {hwaddr, HwAddr} -> list_to_binary(HwAddr)
+    end.
 
+-spec hwaddr_random() -> binary().
+hwaddr_random() ->
+    %% No interface, create random 48-bit number with bit 8 set to one.
+   <<RndHi:7, _:1, RndLow:40>> = crypto:rand_bytes(6),
+   %% Set 8 to 1
+   <<RndHi:7, 1:1, RndLow:40>>.
 
-%% @doc Return variant for supplied UUID.
--spec variant(Uuid::uuid() | uuid_string()) -> reserved_microsoft
-                                             | reserved_ncs
-                                             | resered_future
-                                             | rfc4122.
-variant(<<_:128>> = Uuid) ->
-    <<_:64, V2:1, V1:1, V0:1, _:61>> = Uuid,
-    case {V2, V1, V0} of
-        {0, _, _} -> reserved_ncs;
-        {1, 0, _} -> rfc4122;
-        {1, 1, 0} -> reserved_microsoft;
-        {1, 1, 1} -> reserved_future
-    end;
-variant(UuidStr) when is_list(UuidStr) ->
-    variant(uuid:to_binary(UuidStr));
-variant(_) ->
-    erlang:error(badarg).
-
-
-%% @doc Predicate for checking that supplied UUID is version 1.
--spec is_v1(Uuid::uuid() | uuid_string()) -> true | false.
-is_v1(Uuid) -> ?UUIDv1 =:= version(Uuid).
-
-%% @doc Predicate for checking that supplied UUID is version 3.
--spec is_v3(Uuid::uuid() | uuid_string()) -> true | false.
-is_v3(Uuid) -> ?UUIDv3 =:= version(Uuid).
-
-%% @doc Predicate for checking that supplied UUID is version 4.
--spec is_v4(Uuid::uuid() | uuid_string()) -> true | false.
-is_v4(Uuid) -> ?UUIDv4 =:= version(Uuid).
-
-%% @doc Predicate for checking that supplied UUID is version 5.
--spec is_v5(Uuid::uuid() | uuid_string()) -> true | false.
-is_v5(Uuid) -> ?UUIDv5 =:= version(Uuid).
-
-
-%% @doc Predicate for checking that supplied UUID is valid.
--spec is_valid(Uuid::uuid() | uuid_string()) -> true | false.
-%% XXX special nil UUID is valid
-is_valid(<<0:128>>) -> true;
-is_valid(Uuid = <<_:128>>) ->
-    is_valid(variant(Uuid), Uuid);
-is_valid(UuidStr) when is_list(UuidStr) ->
-    is_valid(to_binary(UuidStr));
-is_valid(_) ->
-    erlang:error(badarg).
 
 %% @private
 %% @doc Predicate for checking that supplied UUID is valid, takes variant as
 %%      argument and returns validity depending on UUID version.
 -spec is_valid(Variant::atom(), Uuid::uuid()) -> true | false.
 is_valid(rfc4122, Uuid) ->
-    Version = version(Uuid),
-    case Version of
+    case version(Uuid) of
         ?UUIDv1 -> true;
         ?UUIDv3 -> true;
         ?UUIDv4 -> true;
