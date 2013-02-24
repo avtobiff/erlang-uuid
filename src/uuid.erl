@@ -106,26 +106,14 @@ uuid1_node(Node) -> Node.
 %%       Magic numbers are from Appendix C of the RFC 4122.
 -spec uuid3(NamespaceOrUuid::atom() | uuid_string() | uuid(),
             Name::string()) -> uuid().
-uuid3(dns, Name) ->
-    create_namebased_uuid(md5,
-        list_to_binary([<<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name]));
-uuid3(url, Name) ->
-    create_namebased_uuid(md5,
-        list_to_binary([<<16#6ba7b8119dad11d180b400c04fd430c8:128>>, Name]));
-uuid3(oid, Name) ->
-    create_namebased_uuid(md5,
-        list_to_binary([<<16#6ba7b8129dad11d180b400c04fd430c8:128>>, Name]));
-uuid3(x500, Name) ->
-    create_namebased_uuid(md5,
-        list_to_binary([<<16#6ba7b8149dad11d180b400c04fd430c8:128>>, Name]));
-uuid3(nil, Name) ->
-    create_namebased_uuid(md5, list_to_binary([<<0:128>>, Name]));
-uuid3(UuidStr, Name) when is_list(UuidStr) ->
-    create_namebased_uuid(md5, list_to_binary([to_binary(UuidStr), Name]));
-uuid3(UuidBin, Name) when is_binary(UuidBin) ->
-    create_namebased_uuid(md5, list_to_binary([UuidBin, Name]));
-uuid3(_, _) ->
-    erlang:error(badarg).
+uuid3(dns,  Name) -> create_namebased_uuid(md5, <<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name);
+uuid3(url,  Name) -> create_namebased_uuid(md5, <<16#6ba7b8119dad11d180b400c04fd430c8:128>>, Name);
+uuid3(oid,  Name) -> create_namebased_uuid(md5, <<16#6ba7b8129dad11d180b400c04fd430c8:128>>, Name);
+uuid3(x500, Name) -> create_namebased_uuid(md5, <<16#6ba7b8149dad11d180b400c04fd430c8:128>>, Name);
+uuid3(nil,  Name) -> create_namebased_uuid(md5, <<0:128>>, Name);
+uuid3(UuidStr, Name) when is_list(UuidStr) -> create_namebased_uuid(md5, to_binary(UuidStr), Name);
+uuid3(UuidBin, Name) when is_binary(UuidBin) -> create_namebased_uuid(md5, UuidBin, Name);
+uuid3(_, _) -> erlang:error(badarg).
 
 
 %% =============================================================================
@@ -153,38 +141,78 @@ uuid4() ->
 %%       Magic numbers are from Appendix C of the RFC 4122.
 -spec uuid5(NamespaceOrUuid::atom() | uuid_string() | uuid(),
             Name::string()) -> uuid().
-uuid5(dns, Name) ->
-    create_namebased_uuid(sha1,
-        list_to_binary([<<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name]));
-uuid5(url, Name) ->
-    create_namebased_uuid(sha1,
-        list_to_binary([<<16#6ba7b8119dad11d180b400c04fd430c8:128>>, Name]));
-uuid5(oid, Name) ->
-    create_namebased_uuid(sha1,
-        list_to_binary([<<16#6ba7b8129dad11d180b400c04fd430c8:128>>, Name]));
-uuid5(x500, Name) ->
-    create_namebased_uuid(sha1,
-        list_to_binary([<<16#6ba7b8149dad11d180b400c04fd430c8:128>>, Name]));
-uuid5(nil, Name) ->
-    create_namebased_uuid(sha1, list_to_binary([<<0:128>>, Name]));
-uuid5(UuidStr, Name) when is_list(UuidStr) ->
-    create_namebased_uuid(sha1, list_to_binary([to_binary(UuidStr), Name]));
-uuid5(UuidBin, Name) when is_binary(UuidBin) ->
-    create_namebased_uuid(sha1, list_to_binary([UuidBin, Name]));
-uuid5(_, _) ->
+uuid5(dns,  Name) -> create_namebased_uuid(sha1, <<16#6ba7b8109dad11d180b400c04fd430c8:128>>, Name);
+uuid5(url,  Name) -> create_namebased_uuid(sha1, <<16#6ba7b8119dad11d180b400c04fd430c8:128>>, Name);
+uuid5(oid,  Name) -> create_namebased_uuid(sha1, <<16#6ba7b8129dad11d180b400c04fd430c8:128>>, Name);
+uuid5(x500, Name) -> create_namebased_uuid(sha1, <<16#6ba7b8149dad11d180b400c04fd430c8:128>>, Name);
+uuid5(nil,  Name) -> create_namebased_uuid(sha1, <<0:128>>, Name);
+uuid5(UuidStr, Name) when is_list(UuidStr) -> create_namebased_uuid(sha1, to_binary(UuidStr), Name);
+uuid5(UuidBin, Name) when is_binary(UuidBin) -> create_namebased_uuid(sha1, UuidBin, Name);
+uuid5(_, _) -> erlang:error(badarg).
+
+
+%% @doc Return variant for supplied UUID.
+-spec variant(Uuid::uuid() | uuid_string()) -> reserved_microsoft
+                                             | reserved_ncs
+                                             | resered_future
+                                             | rfc4122.
+variant(<<_:128>> = Uuid) ->
+    <<_:64, V2:1, V1:1, V0:1, _:61>> = Uuid,
+    case {V2, V1, V0} of
+        {0, _, _} -> reserved_ncs;
+        {1, 0, _} -> rfc4122;
+        {1, 1, 0} -> reserved_microsoft;
+        {1, 1, 1} -> reserved_future
+    end;
+variant(UuidStr) when is_list(UuidStr) ->
+    variant(uuid:to_binary(UuidStr));
+variant(_) ->
     erlang:error(badarg).
 
+%% @doc Return version for supplied UUID.
+-spec version(Uuid::uuid() | uuid_string()) -> integer().
+version(<<_:48, Version:4, _:76>>) -> Version;
+version(UuidStr) when is_list(UuidStr) -> version(uuid:to_binary(UuidStr));
+version(_) -> erlang:error(badarg).
+
+%% @doc Predicate for checking that supplied UUID is version 1.
+-spec is_v1(Uuid::uuid() | uuid_string()) -> true | false.
+is_v1(Uuid) -> ?UUIDv1 =:= version(Uuid).
+
+%% @doc Predicate for checking that supplied UUID is version 3.
+-spec is_v3(Uuid::uuid() | uuid_string()) -> true | false.
+is_v3(Uuid) -> ?UUIDv3 =:= version(Uuid).
+
+%% @doc Predicate for checking that supplied UUID is version 4.
+-spec is_v4(Uuid::uuid() | uuid_string()) -> true | false.
+is_v4(Uuid) -> ?UUIDv4 =:= version(Uuid).
+
+%% @doc Predicate for checking that supplied UUID is version 5.
+-spec is_v5(Uuid::uuid() | uuid_string()) -> true | false.
+is_v5(Uuid) -> ?UUIDv5 =:= version(Uuid).
+
+
+%% @doc Predicate for checking that supplied UUID is valid.
+-spec is_valid(Uuid::uuid() | uuid_string()) -> true | false.
+%% XXX special nil UUID is valid
+is_valid(<<0:128>>) -> true;
+is_valid(Uuid = <<_:128>>) ->
+    is_valid(variant(Uuid), Uuid);
+is_valid(UuidStr) when is_list(UuidStr) ->
+    is_valid(to_binary(UuidStr));
+is_valid(_) ->
+    erlang:error(badarg).
 
 %% @private
 %% @doc  Create a UUID v3 or v5 (name based) from binary, using MD5 or SHA1
 %%       respectively.
--spec create_namebased_uuid(HashFunction::md5 | sha1,
-                            Data::binary()) -> uuid().
-create_namebased_uuid(md5, Data) ->
-    Md5 = crypto:md5(Data),
-    compose_namebased_uuid(?UUIDv3, Md5);
-create_namebased_uuid(sha1, Data) ->
-    <<Sha1:128, _:32>> = crypto:sha(Data),
+-spec create_namebased_uuid(HashFunction::md5 | sha1, Prefix::binary(), Name::string()) -> uuid().
+create_namebased_uuid(md5, Prefix, Name) ->
+    NameBin = list_to_binary(Name),
+    compose_namebased_uuid(?UUIDv3, crypto:md5(<<Prefix/binary,NameBin/binary>>));
+create_namebased_uuid(sha1, Prefix, Name) ->
+    NameBin = list_to_binary(Name),
+    <<Sha1:128, _:32>> = crypto:sha(<<Prefix/binary,NameBin/binary>>),
     compose_namebased_uuid(?UUIDv5, <<Sha1:128>>).
 
 %% @private
