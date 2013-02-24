@@ -336,7 +336,6 @@ is_valid(_, _) -> false.
 %%      Used for random seed.
 -spec now_xor_pid() -> {pos_integer(), pos_integer(), pos_integer()}.
 now_xor_pid() ->
-    [X,Y,Z] = string:tokens(pid_to_list(self()), "<.> "),
-    PidSum = list_to_integer(X) + list_to_integer(Y) + list_to_integer(Z),
+    PidSum = erlang:phash2(term_to_binary(self())),
     {N0, N1, N2} = now(),
     {N0 bxor PidSum, N1 bxor PidSum, N2 bxor PidSum}.
