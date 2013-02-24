@@ -232,7 +232,7 @@ compose_namebased_uuid(Version, Hash) ->
 
 %% @doc  Format UUID string from binary
 -spec to_string(Uuid::uuid()) -> uuid_string().
-to_string(<<_:128>> = Uuid) when is_binary(Uuid) ->
+to_string(<<_:128>> = Uuid) ->
     to_string(pretty, Uuid);
 to_string(_) ->
     erlang:error(badarg).
