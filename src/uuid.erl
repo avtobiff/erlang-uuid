@@ -75,40 +75,28 @@ uuid1() ->
 
 -spec uuid1(NodeArg::binary() | null, ClockSeqArg::binary() | null) -> uuid().
 uuid1(NodeArg, ClockSeqArg) ->
-    %% Determine values for UTC timestamp and clock sequence.
-    %% FIXME Use random clock sequence for now ("state is unavailable").
-    UtcTimestamp =
-        calendar:datetime_to_gregorian_seconds(calendar:universal_time()),
-
-    %% Multiply timestamp with amount of hundred nanosecond intervals per
-    %% second since clock have lower resolution than this.
-    HundredNanosPerSecond = round(1.0e9), % to integer()
-    Timestamp = UtcTimestamp * HundredNanosPerSecond,
-
-    <<TimeHi:12, TimeMid:16, TimeLow:32>> = <<Timestamp:60>>,
-
-    ClockSequence =
-        %% Use ClockSeq if supplied otherwise Generate random clock sequence.
-        case ClockSeqArg of
-            null        ->
-                random:seed(now_xor_pid()),
-                Rnd = random:uniform(2 bsl 14 - 1),
-                <<Rnd:14>>;
-            ClockSeqArg ->
-                <<_:14>> = ClockSeqArg % make 14 bits wide
-        end,
-    <<ClockSeqHi:6, ClockSeqLow:8>> = ClockSequence,
-
-    %% Get MAC address
-    Node =
-        case NodeArg of
-            null -> get_node();
-            _    -> NodeArg
-        end,
-
+    <<TimeHi:12, TimeMid:16, TimeLow:32>> = uuid1_nanoseconds(),
+    <<ClockSeqHi:6, ClockSeqLow:8>> = uuid1_clockseq(ClockSeqArg),
+    Node = uuid1_node(NodeArg),
     %% Compose UUIDv1
     <<TimeLow:32, TimeMid:16, ?UUIDv1:4, TimeHi:12,
       ?VARIANT10:2, ClockSeqLow:8, ClockSeqHi:6, Node/binary>>.
+
+uuid1_nanoseconds() ->
+    Sec = calendar:datetime_to_gregorian_seconds(calendar:universal_time()),
+    {_,_,Usec} = now(),
+    Ts = (Sec * 1000000000) + (Usec * 1000),
+    <<Ts:60>>.
+
+uuid1_clockseq(null) ->
+    random:seed(now_xor_pid()),
+    Rnd = random:uniform(2 bsl 14 - 1),
+    <<Rnd:14>>;
+uuid1_clockseq(Seq) ->
+    <<_:14>> = Seq. % make 14 bits wide
+
+uuid1_node(null) -> get_node();
+uuid1_node(Node) -> Node.
 
 
 %% =============================================================================
