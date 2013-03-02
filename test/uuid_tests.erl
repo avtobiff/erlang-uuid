@@ -213,6 +213,23 @@ version_test() ->
     ?assertMatch(false, uuid:is_valid(<<1:128>>)),
     ?assertMatch(true, uuid:is_valid(<<0:128>>)).
 
+do_randomized_and_timebased_uuids_change_enough_test() ->
+    uuid_mask(fun uuid:uuid1/0, "^.XXXXXXX-....-1...-XXXX-............$"),
+    uuid_mask(fun uuid:uuid4/0, "^XXXXXXXX-XXXX-4XXX-XXXX-XXXXXXXXXXXX$").
+
+uuid_mask(F, Mask) ->
+    ?assertEqual({match,[{0,36}]},
+        re:run(do_uuid_mask(F, 100), Mask)).
+
+do_uuid_mask(F, N) ->
+    lists:foldl(fun mask/2,
+        uuid:to_string(F()),
+        [uuid:to_string(F()) || _ <- lists:seq(1,N)]).
+
+mask(X, Y) -> lists:map(fun eq_or_x/1, lists:zip(X, Y)).
+
+eq_or_x({X, X}) -> X;
+eq_or_x(_) -> $X.
 
 %% helper functions
 try_badarg(F, A) ->
