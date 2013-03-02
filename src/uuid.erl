@@ -156,18 +156,12 @@ uuid5(_, _) -> erlang:error(badarg).
                                              | reserved_ncs
                                              | resered_future
                                              | rfc4122.
-variant(<<_:128>> = Uuid) ->
-    <<_:64, V2:1, V1:1, V0:1, _:61>> = Uuid,
-    case {V2, V1, V0} of
-        {0, _, _} -> reserved_ncs;
-        {1, 0, _} -> rfc4122;
-        {1, 1, 0} -> reserved_microsoft;
-        {1, 1, 1} -> reserved_future
-    end;
-variant(UuidStr) when is_list(UuidStr) ->
-    variant(uuid:to_binary(UuidStr));
-variant(_) ->
-    erlang:error(badarg).
+variant(<<_:64, 0:1, _:1, _:1, _:61>>) -> reserved_ncs;
+variant(<<_:64, 1:1, 0:1, _:1, _:61>>) -> rfc4122;
+variant(<<_:64, 1:1, 1:1, 0:1, _:61>>) -> reserved_microsoft;
+variant(<<_:64, 1:1, 1:1, 1:1, _:61>>) -> reserved_future;
+variant(UuidStr) when is_list(UuidStr) -> variant(uuid:to_binary(UuidStr));
+variant(_)                             -> erlang:error(badarg).
 
 %% @doc Return version for supplied UUID.
 -spec version(Uuid::uuid() | uuid_string()) -> integer().
