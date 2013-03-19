@@ -295,36 +295,28 @@ hex_to_int(Hex) ->
     {ok, [D], []} = io_lib:fread("~16u", Hex),
     D.
 
+-spec hwaddr_random() -> binary().
+hwaddr_random() ->
+    %% No interface, create random 48-bit number with bit 8 set to one.
+   <<RndHi:7, _:1, RndLow:40>> = crypto:rand_bytes(6),
+   %% Set 8 to 1
+   <<RndHi:7, 1:1, RndLow:40>>.
 
-%% @private
-%% @doc Predicate function for filtering interfaces to use
--spec filter_if({IfName::string(), IfConfig::list(tuple())}) -> true | false.
-filter_if({"lo", IfConfig}) -> false; % do not use loopback interface
-filter_if({IfName, IfConfig}) -> lists:keyfind(hwaddr, 1, IfConfig) =/= false.
+-spec hwaddr_find([{IfName::string(), IfConfig::[tuple()]}]) -> binary().
+hwaddr_find([]) -> hwaddr_random(); % default to random
+hwaddr_find([{"lo", IfConfig}|Rest]) -> hwaddr_find(Rest); % do not use loopback interface
+hwaddr_find([{_IfName, IfConfig}|Rest]) ->
+    case lists:keyfind(hwaddr, 1, IfConfig) of
+        false -> hwaddr_find(Rest); % keep looking
+        {hwaddr, HwAddr} -> list_to_binary(HwAddr)
+    end.
 
 %% @doc Get node id (IEEE 802 (MAC) address). Create random node id if hardware
 %%      addres can be found.
 -spec get_node() -> binary().
 get_node() ->
-    %% Get interfaces
     {ok, Ifs0} = inet:getifaddrs(),
-
-    %% Take hwaddr from first interface
-    Ifs1 = lists:filter(fun filter_if/1, Ifs0),
-
-    case length(Ifs1) of
-        %% No interface, create random 48-bit number with bit 8 set to one.
-        0 -> <<RndHi:7, _:1, RndLow:40>> = crypto:rand_bytes(6),
-             %% Set 8 to 1
-             <<RndHi:7, 1:1, RndLow:40>>;
-
-        %% Use hardware address from first interface found.
-        _ -> [{_IfName, IfConfig}|_] = Ifs1,
-             [HwAddr] = [HwAddr || {IfConfigItemName, HwAddr}  <- IfConfig,
-                                   IfConfigItemName =:= hwaddr],
-             list_to_binary(HwAddr)
-    end.
-
+    hwaddr_find(Ifs0).
 
 %% @doc Return version for supplied UUID.
 -spec version(Uuid::uuid() | uuid_string()) -> integer().
