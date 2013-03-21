@@ -379,8 +379,7 @@ is_valid(_) ->
 %%      argument and returns validity depending on UUID version.
 -spec is_valid(Variant::atom(), Uuid::uuid()) -> true | false.
 is_valid(rfc4122, Uuid) ->
-    Version = version(Uuid),
-    case Version of
+    case version(Uuid) of
         ?UUIDv1 -> true;
         ?UUIDv3 -> true;
         ?UUIDv4 -> true;
