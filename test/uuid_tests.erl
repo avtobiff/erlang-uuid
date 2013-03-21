@@ -211,6 +211,16 @@ version_test() ->
     ?assertMatch(false, uuid:is_valid(<<1:128>>)),
     ?assertMatch(true, uuid:is_valid(<<0:128>>)).
 
+stress_test_() ->
+    {inparallel,
+     {"uuid4 stress test.", {timeout, 10000, uuid4_stress()}}}.
+
+uuid4_stress() ->
+    Count = 100000,
+    Uuids = [uuid:uuid4() || _ <- lists:seq(1, Count)],
+    Uniqs = lists:usort(Uuids),
+    ?_assertEqual(Count, length(Uniqs)).
+
 do_randomized_and_timebased_uuids_change_enough_test() ->
     uuid_mask(fun uuid:uuid1/0, "^.XXXXXXX-....-1...-XXXX-............$"),
     uuid_mask(fun uuid:uuid4/0, "^XXXXXXXX-XXXX-4XXX-XXXX-XXXXXXXXXXXX$").
