@@ -71,44 +71,47 @@
 %% @doc Create a UUID v1 (timebased).
 -spec uuid1() -> uuid().
 uuid1() ->
+    %% FIXME Use random clock sequence for now ("state is unavailable").
     uuid1(null, null).
 
 -spec uuid1(NodeArg::binary() | null, ClockSeqArg::binary() | null) -> uuid().
 uuid1(NodeArg, ClockSeqArg) ->
-    %% Determine values for UTC timestamp and clock sequence.
-    %% FIXME Use random clock sequence for now ("state is unavailable").
-    UtcTimestamp =
-        calendar:datetime_to_gregorian_seconds(calendar:universal_time()),
-
-    %% Multiply timestamp with amount of hundred nanosecond intervals per
-    %% second since clock have lower resolution than this.
-    HundredNanosPerSecond = round(1.0e9), % to integer()
-    Timestamp = UtcTimestamp * HundredNanosPerSecond,
-
-    <<TimeHi:12, TimeMid:16, TimeLow:32>> = <<Timestamp:60>>,
-
-    ClockSequence =
-        %% Use ClockSeq if supplied otherwise Generate random clock sequence.
-        case ClockSeqArg of
-            null        ->
-                random:seed(now_xor_pid()),
-                Rnd = random:uniform(2 bsl 14 - 1),
-                <<Rnd:14>>;
-            ClockSeqArg ->
-                <<_:14>> = ClockSeqArg % make 14 bits wide
-        end,
-    <<ClockSeqHi:6, ClockSeqLow:8>> = ClockSequence,
-
-    %% Get MAC address
-    Node =
-        case NodeArg of
-            null -> get_node();
-            _    -> NodeArg
-        end,
+    %% Get time, clock_seq and node
+    <<TimeHi:12, TimeMid:16, TimeLow:32>> = uuid1_time(),
+    <<ClockSeqHi:6, ClockSeqLow:8>> = uuid1_clockseq(ClockSeqArg),
+    Node = uuid1_node(NodeArg),
 
     %% Compose UUIDv1
     <<TimeLow:32, TimeMid:16, ?UUIDv1:4, TimeHi:12,
       ?VARIANT10:2, ClockSeqLow:8, ClockSeqHi:6, Node/binary>>.
+
+%% @private
+%% @doc Get nanosecond timestamp.
+-spec uuid1_time() -> binary().
+uuid1_time() ->
+    Sec = calendar:datetime_to_gregorian_seconds(calendar:universal_time()),
+    {_, _, Usec} = now(),
+    %% Multiply timestamp with amount of hundred nanosecond intervals per
+    %% second since clock have lower resolution than this.
+    Timestamp = Sec * 1000000000 + Usec * 1000,
+    <<Timestamp:60>>.
+
+%% @private
+%% @doc Use ClockSeq if supplied otherwise Generate random clock sequence.
+-spec uuid1_clockseq(null | binary()) -> binary().
+uuid1_clockseq(null) ->
+    random:seed(now_xor_pid()),
+    Rnd = random:uniform(2 bsl 14 - 1),
+    <<Rnd:14>>;
+uuid1_clockseq(ClockSeqArg) ->
+    <<_:14>> = ClockSeqArg. % make 14 bits wide
+
+%% @private
+%% @doc Get MAC address.
+-spec uuid1_node(null | binary()) -> binary().
+uuid1_node(null) -> get_node();
+uuid1_node(NodeArg) -> NodeArg.
+
 
 
 %% =============================================================================
