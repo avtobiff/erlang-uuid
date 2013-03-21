@@ -282,34 +282,41 @@ hex_to_int(Hex) ->
     D.
 
 
-%% @private
-%% @doc Predicate function for filtering interfaces to use
--spec filter_if({IfName::string(), IfConfig::list(tuple())}) -> true | false.
-filter_if({"lo", IfConfig}) -> false; % do not use loopback interface
-filter_if({IfName, IfConfig}) -> lists:keyfind(hwaddr, 1, IfConfig) =/= false.
-
 %% @doc Get node id (IEEE 802 (MAC) address). Create random node id if hardware
-%%      addres can be found.
+%%      address can't be found.
 -spec get_node() -> binary().
 get_node() ->
     %% Get interfaces
     {ok, Ifs0} = inet:getifaddrs(),
+    hwaddr_find(Ifs0).
 
-    %% Take hwaddr from first interface
-    Ifs1 = lists:filter(fun filter_if/1, Ifs0),
 
-    case length(Ifs1) of
-        %% No interface, create random 48-bit number with bit 8 set to one.
-        0 -> <<RndHi:7, _:1, RndLow:40>> = crypto:rand_bytes(6),
-             %% Set 8 to 1
-             <<RndHi:7, 1:1, RndLow:40>>;
+%% @private
+%% @doc Search interface config for hwaddr and return random if no hwaddr was
+%%      found.
+-spec hwaddr_find([{string(), proplists:proplist()}]) -> binary().
+hwaddr_find([{"lo", _IfConfig}|Rest]) ->
+    %% Do not use loopback interface
+    hwaddr_find(Rest);
+hwaddr_find([{_IfName, IfConfig}|Rest]) ->
+    case lists:keyfind(hwaddr, 1, IfConfig) of
+        {hwaddr, HwAddr} ->
+            list_to_binary(HwAddr);
+        false ->
+            hwaddr_find(Rest)
+    end;
+hwaddr_find(_) ->
+    %% Generate random hwaddr as last resort
+    hwaddr_random().
 
-        %% Use hardware address from first interface found.
-        _ -> [{_IfName, IfConfig}|_] = Ifs1,
-             [HwAddr] = [HwAddr || {IfConfigItemName, HwAddr}  <- IfConfig,
-                                   IfConfigItemName =:= hwaddr],
-             list_to_binary(HwAddr)
-    end.
+%% @private
+%% @doc Generate random MAC address
+-spec hwaddr_random() -> binary().
+hwaddr_random() ->
+    %% No interface, create random 48-bit number with bit 8 set to one.
+    <<RndHi:7, _:1, RndLow:40>> = crypto:rand_bytes(6),
+    %% Set 8 to 1
+    <<RndHi:7, 1:1, RndLow:40>>.
 
 
 %% @doc Return version for supplied UUID.
