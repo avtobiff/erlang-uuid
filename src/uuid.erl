@@ -95,11 +95,14 @@ uuid1(NodeArg, ClockSeqArg) ->
 %% @doc Get nanosecond timestamp.
 -spec uuid1_time() -> binary().
 uuid1_time() ->
-    Sec = calendar:datetime_to_gregorian_seconds(calendar:universal_time()),
-    {_, _, Usec} = now(),
-    %% Multiply timestamp with amount of hundred nanosecond intervals per
-    %% second since clock have lower resolution than this.
-    Timestamp = Sec * 1000000000 + Usec * 1000,
+    %% Transform unix epoch to 100 nanosecond intervals since 15 October 1582
+    %% by adding offset to unix epoch and transforming microseconds epoch to
+    %% nanoseconds.
+    {MegaSeconds, Seconds, MicroSeconds} = now(),
+    UnixEpoch =
+        (MegaSeconds * 1000000000000 + Seconds * 1000000 + MicroSeconds),
+    Timestamp = ?nanosecond_intervals_offset +
+        ?nanosecond_intervals_factor * UnixEpoch,
     <<Timestamp:60>>.
 
 %% @private
