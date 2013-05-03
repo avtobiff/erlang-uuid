@@ -222,7 +222,7 @@ uuid4_stress() ->
     ?_assertEqual(Count, length(Uniqs)).
 
 do_randomized_and_timebased_uuids_change_enough_test() ->
-    uuid_mask(fun uuid:uuid1/0, "^.XXXXXXX-....-1...-XXXX-............$"),
+    uuid_mask(fun uuid:uuid1/0, "^...XXXXX-....-1...-XXXX-............$"),
     uuid_mask(fun uuid:uuid4/0, "^XXXXXXXX-XXXX-4XXX-XXXX-XXXXXXXXXXXX$").
 
 uuid_mask(F, Mask) ->
