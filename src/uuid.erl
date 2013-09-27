@@ -210,10 +210,10 @@ uuid5(_, _) ->
 -spec create_namebased_uuid(HashFunction::md5 | sha1,
                             Data::binary()) -> uuid().
 create_namebased_uuid(md5, Data) ->
-    Md5 = crypto:md5(Data),
+    Md5 = crypto:hash(md5, Data),
     compose_namebased_uuid(?UUIDv3, Md5);
-create_namebased_uuid(sha1, Data) ->
-    <<Sha1:128, _:32>> = crypto:sha(Data),
+create_namebased_uuid(sha, Data) ->
+    <<Sha1:128, _:32>> = crypto:hash(sha, Data),
     compose_namebased_uuid(?UUIDv5, <<Sha1:128>>).
 
 %% @private
