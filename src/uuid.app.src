@@ -1,6 +1,6 @@
 {application, uuid,
  [{description, "Erlang UUID"},
-  {vsn, "0.4.4"},
+  {vsn, "0.4.5"},
   {modules, [uuid]},
   {registered, []},
   {applications, [stdlib, crypto]},
