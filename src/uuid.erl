@@ -93,7 +93,7 @@ uuid1(NodeArg, ClockSeqArg) ->
 
 %% @private
 %% @doc Get nanosecond timestamp.
--spec uuid1_time() -> binary().
+-spec uuid1_time() -> <<_:60>>.
 uuid1_time() ->
     %% Transform unix epoch to 100 nanosecond intervals since 15 October 1582
     %% by adding offset to unix epoch and transforming microseconds epoch to
@@ -107,7 +107,7 @@ uuid1_time() ->
 
 %% @private
 %% @doc Use ClockSeq if supplied otherwise Generate random clock sequence.
--spec uuid1_clockseq(null | binary()) -> binary().
+-spec uuid1_clockseq(null | binary()) -> <<_:14>>.
 uuid1_clockseq(null) ->
     random:seed(now_xor_pid()),
     Rnd = random:uniform(2 bsl 14 - 1),
@@ -212,7 +212,7 @@ uuid5(_, _) ->
 create_namebased_uuid(md5, Data) ->
     Md5 = crypto:hash(md5, Data),
     compose_namebased_uuid(?UUIDv3, Md5);
-create_namebased_uuid(sha, Data) ->
+create_namebased_uuid(sha1, Data) ->
     <<Sha1:128, _:32>> = crypto:hash(sha, Data),
     compose_namebased_uuid(?UUIDv5, <<Sha1:128>>).
 
