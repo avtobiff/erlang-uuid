@@ -10,6 +10,7 @@ LIBDIR    := /lib
 DISTDIR   := uuid-$(VERSION)
 
 BEAMFILES := $(wildcard ebin/*.beam) $(wildcard test/*.beam)
+DIALYZER_PLT := erlang-uuid.plt
 
 all: build
 
@@ -20,10 +21,13 @@ ebin/$(APPFILE): src/$(APPFILE).src
 	cp $< $@
 
 clean:
-	-rm -rf ebin/$(APPFILE) $(BEAMFILES)
+	-rm -rf ebin/$(APPFILE) $(BEAMFILES) $(DIALYZER_PLT)
 
-dialyzer:
-	dialyzer -c $(BEAMFILES)
+$(DIALYZER_PLT): build
+	dialyzer --add_to_plt -r ebin --output_plt $(DIALYZER_PLT)
+
+dialyzer: $(DIALYZER_PLT)
+	dialyzer --plt $(DIALYZER_PLT) ebin/uuid.beam
 
 test: build
 	erlc -W +debug_info +compressed +strip -o test/ test/*.erl
