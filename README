@@ -11,11 +11,11 @@ UUID v5 return a UUID generated using SHA1 and a given name within a namespace.
 
 Source tracking available at
 
-    http://gitorious.org/avtobiff/erlang-uuid
+    http://github.com/avtobiff/erlang-uuid
 
 To clone the main developing repository invoke
 
-    git clone git://gitorious.org/avtobiff/erlang-uuid.git
+    git clone https://github.com/avtobiff/erlang-uuid.git
 
 
 
@@ -36,7 +36,7 @@ Install to different $ERL_ROOT ($PREFIX/lib/erlang) by setting PREFIX
 Include in your own project using Rebar. Add this to your rebar.config
 
     {uuid, ".*",
-     {git, "git://gitorious.org/avtobiff/erlang-uuid.git", "master"}}
+     {git, "https://github.com/avtobiff/erlang-uuid.git", "master"}}
 
 
 
