@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 
 APPFILE   := uuid.app
-VERSION   := $(shell sed -n -e '/vsn/ {s/.*,\s*"\([0-9][0-9.]*\)".*/\1/' \
+VERSION   := $(shell sed -n -e '/vsn/ {s/.*,[[:blank:]]*"\([0-9][0-9.]*\)".*/\1/' \
                             -e 'p' -e '}' src/$(APPFILE).src)
 
 PREFIX    ?= /usr
