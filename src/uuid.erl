@@ -98,7 +98,7 @@ uuid1_time() ->
     %% Transform unix epoch to 100 nanosecond intervals since 15 October 1582
     %% by adding offset to unix epoch and transforming microseconds epoch to
     %% nanoseconds.
-    {MegaSeconds, Seconds, MicroSeconds} = now(),
+    {MegaSeconds, Seconds, MicroSeconds} = os:timestamp(),
     UnixEpoch =
         (MegaSeconds * 1000000000000 + Seconds * 1000000 + MicroSeconds),
     Timestamp = ?nanosecond_intervals_offset +
