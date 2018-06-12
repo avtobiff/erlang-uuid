@@ -21,7 +21,7 @@ ebin/$(APPFILE): src/$(APPFILE).src
 	cp $< $@
 
 clean:
-	-rm -rf ebin/$(APPFILE) $(BEAMFILES) $(DIALYZER_PLT)
+	-rm -rf dist ebin/$(APPFILE) $(BEAMFILES) $(DIALYZER_PLT)
 
 $(DIALYZER_PLT): build
 	dialyzer --add_to_plt -r ebin --output_plt $(DIALYZER_PLT)
@@ -32,6 +32,12 @@ dialyzer: $(DIALYZER_PLT)
 test: build
 	erlc -W +debug_info +compressed +strip -o test/ test/*.erl
 	erl -noshell -pa ebin -pa test -eval "uuid_tests:test()" -eval "init:stop()"
+
+dist: build
+	# create dist tarball
+	mkdir -p dist/$(DISTDIR)/ebin
+	install -m0644 ebin/* dist/$(DISTDIR)/ebin
+	(cd dist ; tar zcf $(DISTDIR).tar.gz $(DISTDIR) )
 
 install: build
 	# create dist directory and install files
