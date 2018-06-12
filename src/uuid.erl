@@ -1,5 +1,5 @@
 %% -----------------------------------------------------------------------------
-%% Copyright © 2010-2013 Per Andersson
+%% Copyright © 2010-2018 Per Andersson
 %%
 %% Erlang UUID is free software: you can redistribute it and/or modify
 %% it under the terms of the GNU Lesser General Public License as
@@ -16,7 +16,14 @@
 %% <http://www.gnu.org/licenses/>.
 %% -----------------------------------------------------------------------------
 %% @author Per Andersson <avtobiff@gmail.com>
-%% @copyright 2010-2013 Per Andersson
+%% @copyright 2010-2018 Per Andersson
+%%            2012 Bip Thelin
+%%            2013 Ryan Flynn
+%%            2013 Iivari Äikäs
+%%            2013 William Cummings
+%%            2014 Gianni Gambetti
+%%            2015 Peter Hizalev
+%%            2017 Jean Rouge
 %% @doc
 %% Erlang UUID
 %%
